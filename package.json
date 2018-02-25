@@ -1,0 +1,33 @@
+{
+  "name": "Omniverse",
+  "version": "0.0.1a",
+  "description": "Omniverse server implementation for managing bundles",
+  "main": "index.js",
+  "repository": "www.github.com:Smeb/OmniverseServer",
+  "author": "Ben Ryves",
+  "license": "MIT",
+  "scripts": {
+    "server": "node ./bin/server",
+    "dev": "NODE_ENV=development nodemon ./bin/server"
+  },
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "express": "^4.16.2",
+    "morgan": "^1.9.0",
+    "pg": "^7.4.1",
+    "pg-hstore": "^2.3.2",
+    "sequelize": "^4.34.0",
+    "tsoa": "^2.1.1"
+  },
+  "devDependencies": {
+    "@types/body-parser": "^1.16.8",
+    "@types/errorhandler": "^0.0.32",
+    "@types/morgan": "^1.7.35",
+    "errorhandler": "^1.5.0",
+    "grunt": "^1.0.2",
+    "grunt-contrib-copy": "^1.0.0",
+    "grunt-contrib-watch": "^1.0.0",
+    "grunt-ts": "^6.0.0-beta.17",
+    "nodemon": "^1.15.1"
+  }
+}

@@ -1,0 +1,17 @@
+version: '3'
+services:
+  server:
+    build:
+      context: .
+      dockerfile: docker/server/Dockerfile
+    env_file: ./.env
+    image: server:server
+    command: ["./src/wait-for-it.sh", "postgres:5432", "--", "yarn", "run", "app"]
+    depends_on:
+      - postgres
+  postgres:
+    image: postgres:9.4
+    volumes:
+      - ./database:/docker-entrypoint-initdb.d/
+    ports:
+    - "5432:5432"
