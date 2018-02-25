@@ -1,0 +1,5 @@
+config.json
+
+.tscache
+node_modules
+dist
