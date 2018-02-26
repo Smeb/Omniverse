@@ -1,14 +1,22 @@
-import { Table, Column, Model } from "sequlize-typescript";
+import * as Sequelize from "sequelize";
+import { sequelize } from "../sequelize";
 
-@Table
-class BundleKeys extends Model<Key> {
-  @Column
-  @PrimaryKey
-  @Unique
-  @AllowNull(false)
-  name: string,
-  @Column
-  @Unique
-  @AllowNull(false)
-  key: string
-};
+export const Key = sequelize.define("bundleKey", {
+  name: {
+    type: Sequelize.STRING,
+    primaryKey: true,
+    allowNull: false
+  },
+  key: {
+    type: Sequelize.STRING,
+    unique: true,
+    allowNull: false
+  }
+});
+
+Key.sync({ force: true }).then(() => {
+  return Key.create({
+    name: "bundleName",
+    key: "bundleKey"
+  });
+});

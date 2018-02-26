@@ -7,7 +7,6 @@ export class RegisterBundleRoute extends BaseRoute {
   }
 
   public process(req: Request, res: Response) {
-    console.log("Query on RegisterBundleRoute");
   }
 
   public static create(router: Router) {

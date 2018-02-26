@@ -1,8 +1,7 @@
 import * as bodyParser from "body-parser";
 import * as express from "express";
 import * as logger from "morgan";
-import * as path from "path";
-import errorHandler = require("errorhandler");
+import * as errorHandler from "errorhandler";
 
 import { QueryBundleRoute } from "./routes/get/query-bundle";
 import { RegisterBundleRoute } from "./routes/post/register-bundle";
@@ -42,6 +41,33 @@ export class Server {
     RegisterKeyRoute.create(router);
     QueryBundleRoute.create(router);
 
+    this.errors(router);
+
     this.app.use(router);
+  }
+
+  private errors(router: express.Router) {
+    this.schemaErrorsMiddleware(router);
+  }
+
+  private schemaErrorsMiddleware(router: express.Router) {
+    router.use((err, req, res, next) => {
+      console.log(err.name);
+      if (err.name === "JsonSchemaValidation") {
+        console.log(err.message);
+        res.status(400);
+
+        const responseData = {
+          statusText: "Bad Request",
+          jsonSchemaValidation: true,
+          validations: err.validations
+        };
+
+        console.log("Formatting response");
+        res.json(responseData);
+      } else {
+        next(err);
+      }
+    });
   }
 }
