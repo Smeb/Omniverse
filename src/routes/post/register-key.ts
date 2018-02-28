@@ -1,27 +1,23 @@
-import keyRegistrationSchema from "../schemas/key-registration";
-import { validate } from "express-jsonschema";
-import { Request, Response, Router } from "express";
-import { BaseRoute } from "../route";
 import { KeyController } from "../../controllers/key";
 
+import { BaseRoute } from "../route";
+import keyRegistrationSchema from "../schemas/key-registration";
+
+import { Request, Response, Router } from "express";
+import { validate } from "express-jsonschema";
+
 export class RegisterKeyRoute extends BaseRoute {
-  constructor() {
-    super();
-  }
-
-  public process(req: Request, res: Response) {
-    KeyController.RegisterKey(req.body);
-  }
-
   public static create(router: Router) {
-    console.log("[RegisterKeyRoute::create] creating RegisterKey route");
-
-    router.get(
+    router.post(
       "/POST/RegisterKey",
       validate({ body: keyRegistrationSchema }),
       (req: Request, res: Response) => {
-        new RegisterKeyRoute().process(req.body, res);
+        new RegisterKeyRoute().process(req, res);
       }
     );
+  }
+
+  public process(req: Request, res: Response) {
+    KeyController.RegisterKey(req.body, res);
   }
 }

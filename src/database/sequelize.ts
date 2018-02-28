@@ -1,5 +1,5 @@
-import * as Sequelize from "sequelize";
 import pg from "pg";
+import * as Sequelize from "sequelize";
 
 // TODO: Move to environment variables
 const db = "omniverse";

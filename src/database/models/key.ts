@@ -1,5 +1,11 @@
+/* tslint:disable:object-literal-sort-keys */
 import * as Sequelize from "sequelize";
 import { sequelize } from "../sequelize";
+
+export interface IKeyRegistration {
+  name: string;
+  key: string;
+};
 
 export const Key = sequelize.define("bundleKey", {
   name: {
@@ -9,14 +15,19 @@ export const Key = sequelize.define("bundleKey", {
   },
   key: {
     type: Sequelize.STRING,
-    unique: true,
     allowNull: false
   }
 });
 
 Key.sync({ force: true }).then(() => {
   return Key.create({
-    name: "bundleName",
+    name: "sampleBundle",
     key: "bundleKey"
+  })
+  .then(() => {
+    Key.create({
+      name: "sampleBundle2",
+      key: "bundleKey"
+    })
   });
 });

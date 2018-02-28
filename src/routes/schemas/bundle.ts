@@ -1,21 +1,22 @@
 export default {
   $schema: "http://json-schema.org/draft-07/schema#",
+  additionalProperties: false,
   properties: {
-    hash: { type: "string" },
-    version: { type: "string" },
     dependencies: {
-      type: "array",
       items: {
-        type: "object",
+        additionalProperties: false,
         properties: {
           name: { type: "string" },
           version: { type: "string" }
         },
         required: ["name", "version"],
-        additionalProperties: false
-      }
-    }
+        type: "object"
+      },
+      type: "array"
+    },
+    hash: { type: "string" },
+    name: { type: "string" },
+    version: { type: "string" }
   },
-  required: ["hash", "version", "dependencies"],
-  additionalProperties: false
+  required: ["hash", "version", "dependencies"]
 };
