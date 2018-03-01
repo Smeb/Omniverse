@@ -18,16 +18,3 @@ export const Key = sequelize.define("bundleKey", {
     allowNull: false
   }
 });
-
-Key.sync({ force: true }).then(() => {
-  return Key.create({
-    name: "sampleBundle",
-    key: "bundleKey"
-  })
-  .then(() => {
-    Key.create({
-      name: "sampleBundle2",
-      key: "bundleKey"
-    })
-  });
-});

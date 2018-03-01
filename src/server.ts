@@ -7,8 +7,9 @@ import { QueryBundleRoute } from "./routes/get/query-bundle";
 import { RegisterBundleRoute } from "./routes/post/register-bundle";
 import { RegisterKeyRoute } from "./routes/post/register-key";
 
-export class Server {
+import { sequelize } from "./database/sequelize";
 
+export class Server {
   public static bootstrap(): Server {
     return new Server();
   }
@@ -17,18 +18,22 @@ export class Server {
 
   constructor() {
     this.app = express();
+    this.database();
     this.config();
     this.routes();
   }
-
 
   private config() {
     this.app.use(logger("dev"));
     this.app.use(bodyParser.json());
 
-    if ((process.env.NODE_ENV === "development")) {
+    if (process.env.NODE_ENV === "development") {
       this.app.use(errorHandler());
     }
+  }
+
+  private async database() {
+    sequelize.sync();
   }
 
   private routes() {

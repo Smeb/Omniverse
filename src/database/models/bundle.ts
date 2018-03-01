@@ -2,7 +2,7 @@
 
 import { sequelize } from "../sequelize";
 
-import { IDependencyPair } from "./dependencies";
+import { IDependencyPair } from "./dependency";
 import { Key } from "./key";
 
 import * as Sequelize from "sequelize";
@@ -76,19 +76,3 @@ export const Bundle = sequelize.define("bundleVersions", {
   ]
 });
 
-Bundle.sync({ force: true }).then(() => {
-  return Bundle.create({
-    name: "sampleBundle",
-    hash: "dummyHash1",
-    version: "0.1.1",
-    latest: true
-  })
-  .then(() => {
-    return Bundle.create({
-      name: "sampleBundle2",
-      hash: "dummyHash2",
-      version: "0.1.1",
-      latest: true
-    });
-  });
-});

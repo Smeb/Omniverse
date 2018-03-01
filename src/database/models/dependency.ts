@@ -40,5 +40,3 @@ export const Dependency = sequelize.define("bundleDependencies", {
     },
   }
 });
-
-Dependency.sync({ force: true });
