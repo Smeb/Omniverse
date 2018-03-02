@@ -11,11 +11,6 @@ export interface IDependency {
   version: string
 }
 
-export interface IDependencyPair {
-  dependent: IDependency,
-  dependency: IDependency
-}
-
 export const Dependency = sequelize.define("bundleDependencies", {
   dependent: {
     type: Sequelize.STRING,

@@ -1,5 +1,5 @@
 Arguments: 
-  /usr/bin/node /usr/share/yarn/bin/yarn.js sequelize db:se
+  /usr/bin/node /usr/share/yarn/bin/yarn.js sequelize
 
 PATH: 
   /usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games:/home/archie/.yarn/bin:/home/archie/.yarn/bin
@@ -4314,7 +4314,7 @@ Trace:
   Error: Command failed.
   Exit code: 1
   Command: sh
-  Arguments: -c /home/archie/Omniverse/node_modules/.bin/sequelize db:se
+  Arguments: -c /home/archie/Omniverse/node_modules/.bin/sequelize
   Directory: /home/archie/Omniverse
   Output:
   

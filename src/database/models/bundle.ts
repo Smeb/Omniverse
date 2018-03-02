@@ -2,7 +2,7 @@
 
 import { sequelize } from "../sequelize";
 
-import { IDependencyPair } from "./dependency";
+import { IDependency } from "./dependency";
 import { Key } from "./key";
 
 import * as Sequelize from "sequelize";
@@ -16,7 +16,7 @@ export interface IBundleRegistration {
   name: string;
   hash: string;
   version: string;
-  dependencies: IDependencyPair[]
+  dependencies: IDependency[]
 }
 
 export const versionRegex = /^(\d{1,3}.){2}\d{1,3}$/;
