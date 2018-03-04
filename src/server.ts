@@ -3,9 +3,9 @@ import * as errorHandler from "errorhandler";
 import * as express from "express";
 import * as logger from "morgan";
 
-import { QueryBundleRoute } from "./routes/get/query-bundle";
-import { RegisterBundleRoute } from "./routes/post/register-bundle";
-import { RegisterKeyRoute } from "./routes/post/register-key";
+import { GetBundleRoute } from "./routes/get/bundle";
+import { PostBundleRoute } from "./routes/post/bundle";
+import { PostKeyRoute } from "./routes/post/key";
 
 import { sequelize } from "./database/sequelize";
 
@@ -39,9 +39,9 @@ export class Server {
   private routes() {
     const router: express.Router = express.Router();
 
-    RegisterBundleRoute.create(router);
-    RegisterKeyRoute.create(router);
-    QueryBundleRoute.create(router);
+    GetBundleRoute.create(router);
+    PostBundleRoute.create(router);
+    PostKeyRoute.create(router);
 
     this.errors(router);
 
