@@ -1,7 +1,7 @@
 import { BundleController } from "../../controllers/bundle";
 
 import { BaseRoute } from "../route";
-import bundleSchema from "../schemas/bundle";
+import bundleSchema from "../schemas/bundle-registration";
 
 import { Request, Response, Router } from "express";
 import { validate } from "express-jsonschema";
@@ -11,16 +11,8 @@ export class PostBundleRoute extends BaseRoute {
     router.post(
       "/POST/Bundle",
       validate({ body: bundleSchema }),
-      async (req: Request, res: Response, next) => {
-        await BundleController.verifyRegistration(req.body, res);
-        if (res.headersSent) {
-          return;
-        }
-        next();
-      },
-      (req: Request, res: Response) => {
-        BundleController.registerBundle(req.body, res);
-      }
+      BundleController.validateRegistrationSignature,
+      BundleController.register
     );
   }
 }

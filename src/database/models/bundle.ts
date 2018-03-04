@@ -7,12 +7,15 @@ import { Key } from "./key";
 
 import * as Sequelize from "sequelize";
 
-export interface IBundleRegistration {
+export interface IBundleRegistration extends IBundleRecord {
+  dependencies: IDependency[];
+  signature: string;
+}
+
+export interface IBundleRecord {
   name: string;
   hash: string;
   version: string;
-  dependencies: IDependency[];
-  signature: string;
 }
 
 export const versionRegex = /^(\d{1,3}.){2}\d{1,3}$/;

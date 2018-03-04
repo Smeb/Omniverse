@@ -9,6 +9,10 @@ import { PostKeyRoute } from "./routes/post/key";
 
 import { sequelize } from "./database/sequelize";
 
+process.on("unhandledRejection", (p, reason) => {
+  console.log(`Unhandled rejection at promise: ${p}, reason: ${reason}`)
+});
+
 export class Server {
   public static bootstrap(): Server {
     return new Server();

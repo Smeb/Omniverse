@@ -1,11 +1,12 @@
-import { Request, Response, Router } from "express";
 import { BaseRoute } from "../route";
+
+import { BundleController } from "../../controllers/bundle";
+
+import { Request, Response, Router } from "express";
 
 export class GetBundleRoute extends BaseRoute {
   public static create(router: Router) {
-    router.get("/GET/Bundle", (req: Request, res: Response) => {
-      throw new Error("NotImplemented");
-    });
+    router.get("/GET/Bundle", BundleController.getBundle);
   }
 
   constructor() {

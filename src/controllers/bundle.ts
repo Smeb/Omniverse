@@ -1,10 +1,11 @@
 import {
   Bundle,
-  IBundleRegistration,
-  versionRegex
+  IBundleRecord,
+  IBundleRegistration
 } from "../database/models/bundle";
 import { Dependency, IDependency } from "../database/models/dependency";
 import { sequelize } from "../database/sequelize";
+import { Version } from "../datatypes/version";
 
 import { KeyController } from "./key";
 
@@ -12,27 +13,30 @@ import * as crypto from "crypto";
 import { Request, Response } from "express";
 
 export class BundleController {
-  public static async registerBundle(
-    registration: IBundleRegistration,
+  public static async register(
+    request: Request,
     response: Response
   ): Promise<void> {
-    if (!versionRegex.test(registration.version)) {
-      this.bundleAddFailResponse(
-        new Error(
-          "Malformed version number. Version number should be xxx.xxx.xxx, x = [0, 9]"
-        ),
+    const registration: IBundleRegistration = request.body;
+
+    const version = new Version(registration);
+
+    if (!version.valid) {
+      BundleController.bundleAddFailResponse(
+        new Error(errors.invalidSignature),
         response
       );
+      return;
     }
 
-    const isLatest = await this.checkIfVersionIsLatest(registration);
+    const isLatest = await version.isLatest();
 
-    const dependencyIds = await this.findDependencyIds(
+    const dependencyIds = await BundleController.findDependencyIds(
       registration.dependencies
     );
 
     if (dependencyIds == null) {
-      this.bundleAddFailResponse(
+      BundleController.bundleAddFailResponse(
         new Error("Bundle references dependencies not in database"),
         response
       );
@@ -41,51 +45,106 @@ export class BundleController {
 
     sequelize
       .transaction(transaction =>
-        this.insertBundleTransaction(
+        BundleController.insertBundleTransaction(
           registration,
           isLatest,
           dependencyIds,
           transaction
         )
       )
-      .then(result => this.bundleAddSuccessResponse(result, response))
-      .catch(err => this.bundleAddFailResponse(err, response));
+      .then(result =>
+        BundleController.bundleAddSuccessResponse(result, response)
+      )
+      .catch(err => BundleController.bundleAddFailResponse(err, response));
   }
 
-  public static async verifyRegistration(
-    registration: IBundleRegistration,
-    response: Response
+  public static async validateRegistrationSignature(
+    request: Request,
+    response: Response,
+    next
   ) {
+    const registration: IBundleRegistration = request.body;
+
     const { name, version, hash, dependencies, signature } = registration;
 
     const publicKey = await KeyController.getKey(name);
 
     if (publicKey == null) {
-      return this.notRegisteredErrorResponse(response);
+      return BundleController.notRegisteredErrorResponse(response);
     }
 
     const verifier = crypto.createVerify("SHA256");
 
-    const message = this.formatMessage(name, version, hash, dependencies);
+    const message = BundleController.formatMessage(
+      name,
+      version,
+      hash,
+      dependencies
+    );
     verifier.update(message);
 
     const signatureFromBase64 = Buffer.from(signature, "base64");
 
     if (verifier.verify(publicKey, signatureFromBase64) === false) {
-      return this.invalidSignatureResponse(response);
+      return BundleController.invalidSignatureResponse(response);
+    } else {
+      next();
     }
+  }
+
+  public static async getBundle(request: Request, response: Response) {
+    const name = request.get("name");
+    const version = request.get("version");
+
+    const bundle = await Bundle.findOne({
+      where: { name, version }
+    });
+
+    if (bundle == null) {
+      return BundleController.getBundleFailResponse(response);
+    }
+
+    const { id } = bundle.dataValues;
+
+    const dependencyChain = [
+      id,
+      ...(await BundleController.getBundleDependencyChain(id))
+    ];
+
+    console.log(dependencyChain);
+  }
+
+  private static async getBundleDependencyChain(id) {
+    console.log("Looking up dependency");
+    const dependencyInformation = await Dependency.find({
+      where: { dependent: id }
+    });
+
+    if (dependencyInformation == null) {
+      return [];
+    }
+
+    const { dependency } = dependencyInformation.dataValues;
+
+    return [
+      dependency,
+      ...BundleController.getBundleDependencyChain(dependency)
+    ];
   }
 
   private static async findDependencyIds(dependencies) {
     const dependencyIdResults = await Promise.all(
-      dependencies.map(dependency => this.findIdFromNameVersionPair(dependency))
+      dependencies.map(dependency =>
+        BundleController.findIdFromNameVersionPair(dependency)
+      )
     );
 
     if (dependencyIdResults.includes(null)) {
       return null;
     }
 
-    return dependencyIdResults.map(result => result.dataValues.id);
+    // Typecast resolves issue with typescript inference when using promises
+    return (dependencyIdResults as any[]).map(result => result.id);
   }
 
   private static insertBundleTransaction(
@@ -104,25 +163,31 @@ export class BundleController {
         version: registration.version
       },
       { transaction }
-    ).then(bundle => {
-      const dependentBundleId = bundle.get("id");
+    )
+      .then(bundle => {
+        const dependentBundleId = bundle.get("id");
 
-      return Promise.all(
-        dependencyIds.map(dependencyId => {
-          return Dependency.create(
-            {
-              dependency: dependencyId,
-              dependent: dependentBundleId
-            },
-            { transaction }
+        return Promise.all(
+          dependencyIds.map(dependencyId => {
+            return Dependency.create(
+              {
+                dependency: dependencyId,
+                dependent: dependentBundleId
+              },
+              { transaction }
+            );
+          })
+        );
+      })
+      .then(() => {
+        if (isLatest) {
+          return BundleController.setOtherBundleVersionsToFalse(
+            name,
+            version,
+            transaction
           );
-        })
-      );
-    }).then(() => {
-      if (isLatest) {
-        return this.setOtherBundleVersionsToFalse(name, version, transaction);
-      }
-    })
+        }
+      });
   }
 
   private static setOtherBundleVersionsToFalse(
@@ -162,21 +227,9 @@ export class BundleController {
     );
   }
 
-  private static async checkIfVersionIsLatest(bundle: IBundleRegistration) {
-    const latestVersion = await this.getLatest(bundle.name);
-
-    if (latestVersion == null) {
-      return true;
-    }
-
-    return this.versionGreaterThan(
-      bundle.version,
-      latestVersion.dataValues.version
-    );
-  }
-
   private static findIdFromNameVersionPair(dependency: IDependency) {
     return Bundle.findOne({
+      raw: true,
       where: {
         name: dependency.name,
         version: dependency.version
@@ -184,47 +237,23 @@ export class BundleController {
     });
   }
 
-  private static versionStringToInt(version: string) {
-    // Version format is "xxx.xxx.xxx"
-    return version
-      .split(".")
-      .reduce(
-        (accumulator, input, index) =>
-          accumulator + Number(input) * Math.pow(1000, 2 - index),
-        0
-      );
+  private static getBundleFailResponse(response: Response) {
+    response.status(403).send(errors.versionNotFound);
   }
 
-  private static versionGreaterThan(versionA: string, versionB: string) {
-    // Returns the result of versionA > versionB, where both versions are strings
-    const versionAValue = this.versionStringToInt(versionA);
-    const versionBValue = this.versionStringToInt(versionB);
-
-    return versionAValue > versionBValue;
+  private static notRegisteredErrorResponse(response: Response) {
+    response.status(403).send(errors.notRegistered);
   }
 
-  private static getLatest(bundleName: string) {
-    return Bundle.findOne({
-      where: {
-        latest: true,
-        name: bundleName
-      }
-    });
+  private static invalidSignatureResponse(response: Response) {
+    response.status(403).send(errors.invalidSignature);
   }
 
-  private static async notRegisteredErrorResponse(response: Response) {
-    response.status(403).send("Named bundle is not registered");
-  }
-
-  private static async invalidSignatureResponse(response: Response) {
-    response.status(403).send("Signature didn't match sent message");
-  }
-
-  private static async bundleAddSuccessResponse(result, response: Response) {
+  private static bundleAddSuccessResponse(result, response: Response) {
     response.status(201).send("Bundle version added successfully");
   }
 
-  private static async bundleAddFailResponse(err, response: Response) {
+  private static bundleAddFailResponse(err, response: Response) {
     if (err instanceof sequelize.UniqueConstraintError) {
       response
         .status(403)
@@ -234,3 +263,11 @@ export class BundleController {
     }
   }
 }
+
+const errors = {
+  invalidSignature: "Signature didn't match sent message",
+  notRegistered: "Named bundle doesn't exist in database",
+  versionNotFound: "Bundle (name, version) pair doesn't exist in database",
+  versionMalformed:
+    "Malformed version number. Version number should be xxx.xxx.xxx, x = [0, 9]"
+};
