@@ -4,8 +4,8 @@
 module.exports = {
   up: (queryInterface, Sequelize) => {
     return queryInterface.bulkInsert("bundleDependencies", [{
-      dependent: "sampleBundleHashA2",
-      dependency: "sampleBundleHashB1",
+      dependent: "1",
+      dependency: "2",
       createdAt: Sequelize.fn("NOW"),
       updatedAt: Sequelize.fn("NOW")
     }])

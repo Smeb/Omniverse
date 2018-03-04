@@ -13,23 +13,23 @@ export interface IDependency {
 
 export const Dependency = sequelize.define("bundleDependencies", {
   dependent: {
-    type: Sequelize.STRING,
+    type: Sequelize.INTEGER,
     references: {
       model: Bundle,
-      key: "hash"
+      key: "id"
     }
   },
   dependency: {
-    type: Sequelize.STRING,
+    type: Sequelize.INTEGER,
     references: {
       model: Bundle,
-      key: "hash"
+      key: "id"
     }
   }
 }, {
   validate: {
     cantDependOnSelf() {
-      if (this.dependent !== this.dependency) {
+      if (this.dependent === this.dependency) {
         throw new Error("A bundle cannot depend on itself")
       }
     },

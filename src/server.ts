@@ -33,7 +33,7 @@ export class Server {
   }
 
   private async database() {
-    sequelize.sync();
+    sequelize.sync({ force: true });
   }
 
   private routes() {
@@ -50,11 +50,30 @@ export class Server {
 
   private errors(router: express.Router) {
     this.schemaErrorsMiddleware(router);
+    this.bundleErrorsMiddleware(router);
   }
 
   private schemaErrorsMiddleware(router: express.Router) {
     router.use((err, req, res, next) => {
-      if (err.name === "JsonSchemaValidation") {
+      if (err.name === "BundleControllerError") {
+        res.status(400);
+
+        const responseData = {
+          jsonSchemaValidation: true,
+          statusText: "Bad Request",
+          validations: err.validations
+        };
+
+        res.json(responseData);
+      } else {
+        next(err);
+      }
+    });
+  }
+
+  private bundleErrorsMiddleware(router: express.Router) {
+    router.use((err, req, res, next) => {
+      if (err.name === "BundleControllerError") {
         res.status(400);
 
         const responseData = {

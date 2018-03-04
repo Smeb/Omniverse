@@ -11,13 +11,16 @@ export class RegisterKeyRoute extends BaseRoute {
     router.post(
       "/POST/RegisterKey",
       validate({ body: keyRegistrationSchema }),
+      async (req: Request, res: Response, next) => {
+        await KeyController.decodeAndVerifyKey(req, res);
+        if (res.headersSent) {
+          return;
+        }
+        next();
+      },
       (req: Request, res: Response) => {
-        new RegisterKeyRoute().process(req, res);
+        KeyController.registerKey(req.body, res);
       }
     );
-  }
-
-  public process(req: Request, res: Response) {
-    KeyController.RegisterKey(req.body, res);
   }
 }

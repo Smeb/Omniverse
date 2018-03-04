@@ -16,7 +16,8 @@ export default {
     },
     hash: { type: "string" },
     name: { type: "string" },
+    signature: { type: "string" },
     version: { type: "string" }
   },
-  required: ["hash", "version", "dependencies"]
+  required: ["name", "hash", "version", "dependencies", "signature"]
 };

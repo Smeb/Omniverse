@@ -8,7 +8,8 @@
   "license": "MIT",
   "scripts": {
     "server": "node ./bin/server",
-    "dev": "NODE_ENV=development nodemon ./bin/server"
+    "dev": "NODE_ENV=development nodemon ./bin/server",
+    "reseed": "sequelize db:seed:undo:all && sequelize db:seed:all"
   },
   "dependencies": {
     "body-parser": "^1.18.2",

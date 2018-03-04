@@ -14,7 +14,7 @@ export const Key = sequelize.define("bundleKey", {
     allowNull: false
   },
   key: {
-    type: Sequelize.STRING,
+    type: Sequelize.TEXT,
     allowNull: false
   }
 });
