@@ -1,24 +1,11 @@
 /* tslint:disable:object-literal-sort-keys */
-
-import { sequelize } from "../sequelize";
-
-import { IDependency } from "./dependency";
-import { Key } from "./key";
-
 import * as Sequelize from "sequelize";
 
-export interface IBundleRegistration extends IBundleRecord {
-  dependencies: IDependency[];
-  signature: string;
-}
+import { Key } from "./key";
 
-export interface IBundleRecord {
-  name: string;
-  hash: string;
-  version: string;
-}
+import { versionRegex } from "../datatypes/version";
 
-export const versionRegex = /^(\d{1,3}.){2}\d{1,3}$/;
+import { sequelize } from "../sequelize";
 
 export const Bundle = sequelize.define("bundleVersions", {
   name: {
@@ -74,4 +61,3 @@ export const Bundle = sequelize.define("bundleVersions", {
     },
   ]
 });
-

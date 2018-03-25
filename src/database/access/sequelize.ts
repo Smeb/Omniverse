@@ -1,4 +1,4 @@
-import * as sequelizeConfig from "./config";
+import * as sequelizeConfig from "../config";
 
 import * as Sequelize from "sequelize";
 

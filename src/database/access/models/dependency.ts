@@ -1,19 +1,14 @@
 /* tslint:disable:object-literal-sort-keys */
-
-import { sequelize } from "../sequelize";
+import * as Sequelize from "sequelize";
 
 import { Bundle } from "./bundle";
 
-import * as Sequelize from "sequelize";
-
-export interface IDependency {
-  name: string,
-  version: string
-}
+import { sequelize } from "../sequelize";
 
 export const Dependency = sequelize.define("bundleDependencies", {
   dependent: {
     type: Sequelize.INTEGER,
+    allowNull: false,
     references: {
       model: Bundle,
       key: "id"
@@ -21,6 +16,7 @@ export const Dependency = sequelize.define("bundleDependencies", {
   },
   dependency: {
     type: Sequelize.INTEGER,
+    allowNull: false,
     references: {
       model: Bundle,
       key: "id"

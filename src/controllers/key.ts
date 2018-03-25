@@ -1,4 +1,5 @@
-import { IKeyRegistration, Key } from "../database/models/key";
+import { KeyAccess } from "../database/access/keys";
+import { IKeyRegistration } from "../database/access/types";
 
 import * as crypto from "crypto";
 import { Request, Response } from "express";
@@ -6,19 +7,9 @@ import sequelize from "sequelize";
 
 export class KeyController {
   public static async registerKey(registration: IKeyRegistration, response: Response) : Promise<void> {
-    Key.create(registration)
+    await KeyAccess.create(registration)
       .then(result => this.keyAddSuccessResponse(result, response))
       .catch(err => this.keyAddFailedResponse(err, response));
-  }
-
-  public static async getKey(bundleName: string) {
-    const query = await Key.findOne({ where: { name: bundleName }});
-
-    if (query == null) {
-      return null;
-    }
-
-    return query.dataValues.key;
   }
 
   public static async decodeAndVerifyKey(request: Request, response: Response) {

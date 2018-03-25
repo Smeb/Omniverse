@@ -1,11 +1,7 @@
 /* tslint:disable:object-literal-sort-keys */
 import * as Sequelize from "sequelize";
-import { sequelize } from "../sequelize";
 
-export interface IKeyRegistration {
-  name: string;
-  key: string;
-};
+import { sequelize } from "../sequelize";
 
 export const Key = sequelize.define("bundleKey", {
   name: {

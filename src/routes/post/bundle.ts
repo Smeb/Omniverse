@@ -11,7 +11,6 @@ export class PostBundleRoute extends BaseRoute {
     router.post(
       "/POST/Bundle",
       validate({ body: bundleSchema }),
-      BundleController.validateRegistrationSignature,
       BundleController.register
     );
   }

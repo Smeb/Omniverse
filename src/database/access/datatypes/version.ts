@@ -1,4 +1,7 @@
-import { Bundle, IBundleRegistration, versionRegex } from "../database/models/bundle";
+import { BundleAccess } from "../bundles";
+import { IBundleRegistration } from "../types";
+
+export const versionRegex = /^(\d{1,3}.){2}\d{1,3}$/;
 
 export class Version {
   public valid;
@@ -12,8 +15,12 @@ export class Version {
     this.valid = versionRegex.test(version);
   }
 
+  public toString() {
+    return this.version;
+  }
+
   public async isLatest() {
-    const latestVersion = await this.getLatestVersion();
+    const latestVersion = await BundleAccess.getLatestVersion(this.name);
 
     if (latestVersion == null) {
       return true;
@@ -42,14 +49,5 @@ export class Version {
     const versionBValue = this.versionStringToInt(versionB);
 
     return versionAValue > versionBValue;
-  }
-
-  private getLatestVersion() {
-    return Bundle.findOne({
-      where: {
-        latest: true,
-        name: this.name
-      }
-    });
   }
 }
