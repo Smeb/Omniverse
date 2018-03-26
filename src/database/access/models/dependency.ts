@@ -6,22 +6,6 @@ import { Bundle } from "./bundle";
 import { sequelize } from "../sequelize";
 
 export const Dependency = sequelize.define("bundleDependencies", {
-  dependent: {
-    type: Sequelize.INTEGER,
-    allowNull: false,
-    references: {
-      model: Bundle,
-      key: "id"
-    }
-  },
-  dependency: {
-    type: Sequelize.INTEGER,
-    allowNull: false,
-    references: {
-      model: Bundle,
-      key: "id"
-    }
-  }
 }, {
   validate: {
     cantDependOnSelf() {
@@ -31,3 +15,5 @@ export const Dependency = sequelize.define("bundleDependencies", {
     },
   }
 });
+
+Bundle.belongsToMany(Bundle, { as: "dependency", through: Dependency, foreignKey: "dependent", otherKey: "dependency" });

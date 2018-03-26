@@ -10,6 +10,7 @@ export interface IBundleRecord {
   name: string;
   hash: string;
   version: string;
+  isLatest: boolean;
 }
 export interface IKeyRegistration {
   name: string;

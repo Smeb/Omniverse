@@ -6,7 +6,7 @@
 export default class ExpectedError extends Error {
   public readonly originalError: Error
 
-  constructor(message, originalError) {
+  constructor(message, originalError=null) {
     super(message);
     this.originalError = originalError;
   }

@@ -8,7 +8,7 @@ import { KeyAccess } from "./keys";
 import { Bundle } from "./models/bundle";
 import { Dependency } from "./models/dependency";
 import { sequelize } from "./sequelize";
-import { IBundleRegistration, IDependency } from "./types";
+import { IBundleRecord, IBundleRegistration, IDependency } from "./types";
 
 export class BundleAccess {
   public static async fromNameVersionPair(name: string, version: string) {
@@ -24,8 +24,17 @@ export class BundleAccess {
     return result;
   }
 
-  public static bundleDependencies(bundle) {
-    throw new Error("NotImplementedException");
+  public static async bundleDependencies(bundle: IBundleRecord) {
+    const dependency = await Dependency.findAll({
+      include: [ Bundle ],
+      where: {
+        Dependent: bundle.id
+      }
+    });
+
+    console.log(dependency);
+
+    throw new ExpectedError("Not fully implemented");
   }
 
   public static async registerBundle(registration: IBundleRegistration) {
@@ -50,17 +59,19 @@ export class BundleAccess {
       throw new Error("Named dependencies were missing in the database");
     }
 
-    await sequelize.transaction(transaction =>
-      BundleAccess.insertBundleTransaction(
-        registration,
-        isLatest,
-        dependencyIds,
-        transaction
+    await sequelize
+      .transaction(transaction =>
+        BundleAccess.insertBundleTransaction(
+          registration,
+          isLatest,
+          dependencyIds,
+          transaction
+        )
       )
-    ).catch(UniqueConstraintError, err => {
-      const { name, version } = registration;
-      throw new ExpectedError(`Bundle (${name}, ${version}) already exists`);
-    });
+      .catch(UniqueConstraintError, err => {
+        const { name, version } = registration;
+        throw new ExpectedError(`Bundle (${name}, ${version}) already exists`);
+      });
 
     return;
   }

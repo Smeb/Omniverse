@@ -35,7 +35,7 @@ export class Server {
   }
 
   private async database() {
-    // sequelize.sync({ force: true });
+    sequelize.sync({ force: true });
   }
 
   private routes() {
@@ -113,14 +113,15 @@ export class Server {
         if (
           err.validations &&
           err.validations.body &&
-          err.validations.body[0] &&
-          err.validations.body[0].messages
+          err.validations.body[0]
         ) {
-          failures = err.validations.body[0].messages;
+          failures = err.validations.body.map(detail =>
+            `${detail.property} failed validation because "${detail.messages}"`
+          )
         }
         const responseData = {
           failures,
-          statusText: "Message body failed schema validation"
+          statusText: "Request body failed schema validation"
         };
 
         res.json(responseData);
