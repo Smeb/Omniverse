@@ -22,7 +22,6 @@ export class BundleController {
   }
 
   public static async getBundle(request: Request, response: Response) {
-    console.log(request);
     const name = request.get("name");
     const version = request.get("version");
 

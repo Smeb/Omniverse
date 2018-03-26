@@ -7,7 +7,13 @@ export const Key = sequelize.define("bundleKey", {
   name: {
     type: Sequelize.STRING,
     primaryKey: true,
-    allowNull: false
+    allowNull: false,
+    validate: {
+      notEmpty: {
+        args: false,
+        msg: "Bundle name cannot be an empty string"
+      }
+    }
   },
   key: {
     type: Sequelize.TEXT,

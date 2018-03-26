@@ -4,6 +4,8 @@ import * as expressWinston from "express-winston";
 import * as fs from "fs";
 import * as winston from "winston";
 
+import { JsonSchemaValidation } from "express-jsonschema";
+
 import ExpectedError from "./errors/expected";
 import { GetBundleRoute } from "./routes/get/bundle";
 import { PostBundleRoute } from "./routes/post/bundle";
@@ -11,18 +13,12 @@ import { PostKeyRoute } from "./routes/post/key";
 
 import { sequelize } from "./database/access/sequelize";
 
-process.on("unhandledRejection", (reason, p) => {
-  console.log(`Unhandled rejection at promise: ${p}`);
-  console.log(reason.stack);
-});
-
 export class Server {
-
   public static bootstrap(): Server {
     return new Server();
   }
 
-  public errorLogger
+  public errorLogger;
 
   public app: express.Application;
 
@@ -76,10 +72,6 @@ export class Server {
     this.app.use(
       expressWinston.logger({
         transports: [
-          new winston.transports.Console({
-            colorize: true,
-            json: true
-          }),
           new (require("winston-daily-rotate-file"))({
             filename: `${requestsLogDir}/%DATE%.log`,
             level,
@@ -90,7 +82,7 @@ export class Server {
     );
 
     // Error logging
-    this.errorLogger = new (winston.Logger)({
+    this.errorLogger = new winston.Logger({
       transports: [
         new winston.transports.Console({
           colorize: true,
@@ -114,13 +106,21 @@ export class Server {
 
   private schemaErrorsMiddleware(router: express.Router) {
     router.use((err, req, res, next) => {
-      if (err.name === "BundleControllerError") {
+      if (err instanceof JsonSchemaValidation) {
         res.status(400);
 
+        let failures = "";
+        if (
+          err.validations &&
+          err.validations.body &&
+          err.validations.body[0] &&
+          err.validations.body[0].messages
+        ) {
+          failures = err.validations.body[0].messages;
+        }
         const responseData = {
-          jsonSchemaValidation: true,
-          statusText: "Bad Request",
-          validations: err.validations
+          failures,
+          statusText: "Message body failed schema validation"
         };
 
         res.json(responseData);
@@ -131,15 +131,21 @@ export class Server {
     });
   }
 
-  private stringifyRequest(req) {
-    console.log("stringified request")
-    console.log(req.body);
-    console.log(req.headers);
-  }
-
   private logError(err, req, priority) {
-    const errorMetadata = { headers: req.headers, body: req.body, priority };
-    this.errorLogger.error(err, errorMetadata);
+    const errorMetadata: any = {
+      body: req.body,
+      headers: req.headers,
+      priority
+    };
+
+    if (priority !== 0) {
+      errorMetadata.error = {
+        ...err,
+        stack: err.stack ? err.stack.split("\n") : "no stack information"
+      };
+    }
+
+    this.errorLogger.error(err.message, errorMetadata);
   }
 
   private expectedErrorsMiddleware(router: express.Router) {
@@ -155,13 +161,14 @@ export class Server {
         res.json(responseData);
         res.send();
       } else {
-        next();
+        next(err);
       }
     });
   }
 
   private fallbackErrorMiddleware(router: express.Router) {
     router.use((err, req, res, next) => {
+      this.logError(err, req, 1);
       res.status(503);
 
       res.json({

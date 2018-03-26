@@ -11,16 +11,7 @@ export class PostKeyRoute extends BaseRoute {
     router.post(
       "/POST/Key",
       validate({ body: keyRegistrationSchema }),
-      async (req: Request, res: Response, next) => {
-        await KeyController.decodeAndVerifyKey(req, res);
-        if (res.headersSent) {
-          return;
-        }
-        next();
-      },
-      (req: Request, res: Response) => {
-        KeyController.registerKey(req.body, res);
-      }
+      KeyController.registerKey
     );
   }
 }
