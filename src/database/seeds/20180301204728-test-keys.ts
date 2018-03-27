@@ -5,12 +5,7 @@ module.exports = {
   up: (queryInterface, Sequelize) => {
     return queryInterface.bulkInsert("bundleKeys", [{
       key: "bundleAKey",
-      name: "sampleBundleA",
-      createdAt: Sequelize.fn("NOW"),
-      updatedAt: Sequelize.fn("NOW")
-    }, {
-      key: "bundleBKey",
-      name: "sampleBundleB",
+      name: "sampleBundle",
       createdAt: Sequelize.fn("NOW"),
       updatedAt: Sequelize.fn("NOW")
     }])

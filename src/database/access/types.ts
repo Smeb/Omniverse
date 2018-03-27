@@ -7,6 +7,7 @@ export interface IBundleRegistration extends IBundleRecord {
   signature: string;
 }
 export interface IBundleRecord {
+  id: number;
   name: string;
   hash: string;
   version: string;

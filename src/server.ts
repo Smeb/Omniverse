@@ -35,7 +35,7 @@ export class Server {
   }
 
   private async database() {
-    sequelize.sync({ force: true });
+    //sequelize.sync({ force: true });
   }
 
   private routes() {
@@ -84,10 +84,6 @@ export class Server {
     // Error logging
     this.errorLogger = new winston.Logger({
       transports: [
-        new winston.transports.Console({
-          colorize: true,
-          json: true
-        }),
         new (require("winston-daily-rotate-file"))({
           filename: `${errorsLogDir}/%DATE%.log`,
           json: true,

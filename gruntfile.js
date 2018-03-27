@@ -1,15 +1,5 @@
 module.exports = function(grunt) {
   grunt.initConfig({
-    copy: {
-      build: {
-        files: [{
-          expand: true,
-          cwd: "./public",
-          src: ["**"],
-          dest: "./dist/public"
-        }]
-      }
-    },
     ts: {
       app: {
         files: [{
@@ -31,12 +21,10 @@ module.exports = function(grunt) {
       }
     }
   });
-  grunt.loadNpmTasks("grunt-contrib-copy");
   grunt.loadNpmTasks("grunt-contrib-watch");
   grunt.loadNpmTasks("grunt-ts");
 
   grunt.registerTask("default", [
-    "copy",
     "ts"
   ]);
 };

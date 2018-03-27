@@ -1,25 +1,27 @@
-/* tslint:disable:object-literal-sort-keys */
 'use strict';
 
 module.exports = {
   up: (queryInterface, Sequelize) => {
     return queryInterface.bulkInsert("bundleVersions", [{
-      name: "sampleBundleA",
-      hash: "sampleBundleHashA1",
+      bundleNamespace: "sampleBundle",
+      name: "sampleBundle.A",
+      hash: "sampleBundle.Ahash1",
       version: "0.1.1",
       latest: false,
       createdAt: Sequelize.fn("NOW"),
       updatedAt: Sequelize.fn("NOW")
     }, {
-      name: "sampleBundleA",
-      hash: "sampleBundleHashA2",
+      bundleNamespace: "sampleBundle",
+      name: "sampleBundle.A",
+      hash: "sampleBundle.Ahash2",
       version: "0.1.2",
       latest: true,
       createdAt: Sequelize.fn("NOW"),
       updatedAt: Sequelize.fn("NOW")
     }, {
-      name: "sampleBundleB",
-      hash: "sampleBundleHashB1",
+      bundleNamespace: "sampleBundle",
+      name: "sampleBundle.B",
+      hash: "sampleBundle.BHash1",
       version: "0.1.1",
       latest: true,
       createdAt: Sequelize.fn("NOW"),

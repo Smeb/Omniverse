@@ -1,5 +1,5 @@
 import * as crypto from "crypto";
-import { UniqueConstraintError } from "sequelize";
+import { UniqueConstraintError, ValidationError } from "sequelize";
 
 import ExpectedError from "../../errors/expected";
 
@@ -26,7 +26,7 @@ export class BundleAccess {
 
   public static async bundleDependencies(bundle: IBundleRecord) {
     const dependency = await Dependency.findAll({
-      include: [ Bundle ],
+      include: [Bundle],
       where: {
         Dependent: bundle.id
       }
@@ -41,13 +41,13 @@ export class BundleAccess {
     const authenticated = await BundleAccess.authenticate(registration);
 
     if (authenticated === false) {
-      throw new Error("Authentication failed");
+      throw new ExpectedError("Authentication failed");
     }
 
     const version = new Version(registration);
 
     if (!version.valid) {
-      throw new Error("Bundle version is incorrectly formatted");
+      throw new ExpectedError("Bundle version is incorrectly formatted");
     }
     const isLatest = await version.isLatest();
 
@@ -56,7 +56,9 @@ export class BundleAccess {
     );
 
     if (dependencyIds == null) {
-      throw new Error("Named dependencies were missing in the database");
+      throw new ExpectedError(
+        "Named dependencies were missing in the database"
+      );
     }
 
     await sequelize
@@ -69,8 +71,10 @@ export class BundleAccess {
         )
       )
       .catch(UniqueConstraintError, err => {
-        const { name, version } = registration;
-        throw new ExpectedError(`Bundle (${name}, ${version}) already exists`);
+        const { name } = registration;
+        throw new ExpectedError(
+          `Bundle (${name}, ${version.toString()}) already exists`
+        );
       });
 
     return;
@@ -88,10 +92,13 @@ export class BundleAccess {
   private static async authenticate(registration: IBundleRegistration) {
     const { name, version, hash, dependencies, signature } = registration;
 
-    const publicKey = await KeyAccess.getKey(name);
+    const bundleNamespace = name.split(".")[0];
+    const publicKey = await KeyAccess.getKey(bundleNamespace);
 
     if (publicKey == null) {
-      return false;
+      throw new ExpectedError(
+        "Bundle namespace hasn't been registered in the database"
+      );
     }
 
     const verifier = crypto.createVerify("SHA256");
@@ -130,13 +137,15 @@ export class BundleAccess {
     transaction
   ) {
     const { name, version, hash } = registration;
+    const bundleNamespace = name.split(".")[0];
 
     return Bundle.create(
       {
-        hash: registration.hash,
+        bundleNamespace,
+        hash,
         latest: isLatest,
-        name: registration.name,
-        version: registration.version
+        name,
+        version,
       },
       { transaction }
     )

@@ -1,6 +1,7 @@
 /* tslint:disable:object-literal-sort-keys */
 import * as Sequelize from "sequelize";
 
+
 import { Bundle } from "./bundle";
 
 import { sequelize } from "../sequelize";

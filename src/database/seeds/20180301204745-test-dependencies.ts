@@ -5,14 +5,14 @@ module.exports = {
   up: async (queryInterface, Sequelize) => {
     const bundleAId = await queryInterface.rawSelect("bundleVersions", {
       where: {
-        name: "sampleBundleA",
+        name: "sampleBundle.A",
         version : "0.1.2"
       }
     }, ["id"]);
 
     const bundleBId = await queryInterface.rawSelect("bundleVersions", {
       where: {
-        name: "sampleBundleB",
+        name: "sampleBundle.B",
         version: "0.1.1"
       }
     }, ["id"]);
