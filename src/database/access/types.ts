@@ -14,6 +14,6 @@ export interface IBundleRecord {
   isLatest: boolean;
 }
 export interface IKeyRegistration {
-  name: string;
+  bundleNamespace: string;
   key: string;
 };

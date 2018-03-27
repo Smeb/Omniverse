@@ -8,7 +8,7 @@ import {
   IBundleRegistration,
   IDependency
 } from "../database/access/types";
-import ExpectedError from "../errors/expected";
+import UserError from "../errors/user";
 
 export class BundleController {
   public static async register(
@@ -28,9 +28,9 @@ export class BundleController {
     const bundle = await BundleAccess.fromNameVersionPair(name, version);
 
     if (bundle == null && version != null) {
-      throw new ExpectedError(bundleVersionNotFound(name, version));
+      throw new UserError(bundleVersionNotFound(name, version));
     } else if (bundle == null) {
-      throw new ExpectedError(bundleNotFound(name));
+      throw new UserError(bundleNotFound(name));
     }
 
     const dependencies = BundleAccess.bundleDependencies(bundle);

@@ -3,7 +3,7 @@
  * the original error for logging.
  */
 
-export default class ExpectedError extends Error {
+export default class UserError extends Error {
   public readonly originalError: Error
 
   constructor(message, originalError=null) {

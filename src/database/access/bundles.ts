@@ -1,7 +1,7 @@
 import * as crypto from "crypto";
 import { UniqueConstraintError, ValidationError } from "sequelize";
 
-import ExpectedError from "../../errors/expected";
+import UserError from "../../errors/user";
 
 import { Version } from "./datatypes/version";
 import { KeyAccess } from "./keys";
@@ -34,20 +34,20 @@ export class BundleAccess {
 
     console.log(dependency);
 
-    throw new ExpectedError("Not fully implemented");
+    throw new UserError("Not fully implemented");
   }
 
   public static async registerBundle(registration: IBundleRegistration) {
     const authenticated = await BundleAccess.authenticate(registration);
 
     if (authenticated === false) {
-      throw new ExpectedError("Authentication failed");
+      throw new UserError("Authentication failed");
     }
 
     const version = new Version(registration);
 
     if (!version.valid) {
-      throw new ExpectedError("Bundle version is incorrectly formatted");
+      throw new UserError("Bundle version is incorrectly formatted");
     }
     const isLatest = await version.isLatest();
 
@@ -56,7 +56,7 @@ export class BundleAccess {
     );
 
     if (dependencyIds == null) {
-      throw new ExpectedError(
+      throw new UserError(
         "Named dependencies were missing in the database"
       );
     }
@@ -72,7 +72,7 @@ export class BundleAccess {
       )
       .catch(UniqueConstraintError, err => {
         const { name } = registration;
-        throw new ExpectedError(
+        throw new UserError(
           `Bundle (${name}, ${version.toString()}) already exists`
         );
       });
@@ -96,7 +96,7 @@ export class BundleAccess {
     const publicKey = await KeyAccess.getKey(bundleNamespace);
 
     if (publicKey == null) {
-      throw new ExpectedError(
+      throw new UserError(
         "Bundle namespace hasn't been registered in the database"
       );
     }

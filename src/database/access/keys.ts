@@ -1,12 +1,12 @@
 import * as crypto from "crypto";
 import { UniqueConstraintError, ValidationError } from "sequelize";
 
-import { Key } from "./models/key";
+import { bundleNamespaceRegex, Key } from "./models/key";
 import { sequelize } from "./sequelize";
 import { IKeyRegistration } from "./types";
 
-import ExpectedError from "../../errors/expected";
-import { trimValidationMessage } from "../../errors/utils/formatting"
+import UserError from "../../errors/user";
+import { trimValidationMessage } from "../../errors/utils/formatting";
 
 export class KeyAccess {
   public static async getKey(bundleName: string) {
@@ -21,17 +21,21 @@ export class KeyAccess {
 
   public static async create(registration: IKeyRegistration) {
     // TODO: Add authentication logic to test against server admin key
+    const { bundleNamespace } = registration;
+    if (!bundleNamespaceRegex.test(bundleNamespace)) {
+      throw new UserError("Bundle namespace should be alphanumeric");
+    }
+
     try {
-      const { name } = registration;
       const key = this.decodeAndVerifyKey(registration);
-      const result = await Key.create({ name, key });
+      const result = await Key.create({ bundleNamespace, key });
       return result.dataValues.name;
     } catch (err) {
       if (err instanceof UniqueConstraintError) {
-        throw new ExpectedError(`Bundle name has already been registered`, err);
+        throw new UserError(`Bundle name has already been registered`, err);
       } else if (err instanceof ValidationError) {
         const message = trimValidationMessage(err);
-        throw new ExpectedError(message, err);
+        throw new UserError(message, err);
       } else {
         throw err;
       }
@@ -44,8 +48,10 @@ export class KeyAccess {
       crypto.publicEncrypt(key, Buffer.from("Test"));
       return key;
     } catch (e) {
-      throw new ExpectedError("Key should be sent as base64, decoded base64 should be .pem format", e);
+      throw new UserError(
+        "Key should be sent as base64, decoded base64 should be .pem format",
+        e
+      );
     }
   }
 }
-

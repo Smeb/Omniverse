@@ -6,7 +6,7 @@ import * as winston from "winston";
 
 import { JsonSchemaValidation } from "express-jsonschema";
 
-import ExpectedError from "./errors/expected";
+import UserError from "./errors/user";
 import { GetBundleRoute } from "./routes/get/bundle";
 import { PostBundleRoute } from "./routes/post/bundle";
 import { PostKeyRoute } from "./routes/post/key";
@@ -96,7 +96,7 @@ export class Server {
 
   private errors(router: express.Router) {
     this.schemaErrorsMiddleware(router);
-    this.expectedErrorsMiddleware(router);
+    this.userErrorsMiddleware(router);
     this.fallbackErrorMiddleware(router);
   }
 
@@ -145,9 +145,9 @@ export class Server {
     this.errorLogger.error(err.message, errorMetadata);
   }
 
-  private expectedErrorsMiddleware(router: express.Router) {
+  private userErrorsMiddleware(router: express.Router) {
     router.use((err, req, res, next) => {
-      if (err instanceof ExpectedError) {
+      if (err instanceof UserError) {
         this.logError(err, req, 0);
         res.status(400);
 
