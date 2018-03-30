@@ -2,6 +2,21 @@ export default {
   $schema: "http://json-schema.org/draft-07/schema#",
   additionalProperties: false,
   properties: {
+    bundles: {
+      items: {
+        additionalProperties: false,
+        minItems: 1,
+        properties: {
+          crc: { type: "string"},
+          hash: { type: "string"},
+          type: { type: "string"},
+          uri: { type: "string"}
+        },
+        required: ["crc", "hash", "type", "uri"],
+        type: "object"
+      },
+      type: "array"
+    },
     dependencies: {
       items: {
         additionalProperties: false,
@@ -16,8 +31,7 @@ export default {
     },
     name: { type: "string" },
     signature: { type: "string" },
-    uri: { type: "string" },
     version: { type: "string" }
   },
-  required: ["name", "uri", "version", "dependencies", "signature"]
+  required: ["name", "bundles", "version", "dependencies", "signature"]
 };
