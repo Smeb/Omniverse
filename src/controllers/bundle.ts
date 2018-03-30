@@ -36,16 +36,20 @@ export class BundleController {
     const name = request.get("name");
     const version = request.get("version");
 
-    const bundle =
-      version === undefined
-        ? await BundleAccess.fromName(name)
-        : await BundleAccess.fromNameVersionPair(name, version);
+    const environment = await BundleAccess.getBundleWithDependencies(name, version);
 
-    if (bundle == null && version != null) {
-      throw new UserError(bundleVersionNotFound(name, version));
-    } else if (bundle == null) {
-      throw new UserError(bundleNotFound(name));
+    if (environment == null) {
+      if (version != null) {
+        throw new UserError(bundleVersionNotFound(name, version));
+      } else {
+        throw new UserError(bundleNotFound(name));
+      }
     }
+
+    console.log(environment);
+
+    BundleController.prepareEnvironmentJson(environment);
+    throw new UserError("Route not implemented yet");
 
     /*
     const loadOrder = [bundle, ...dependencies].map(item => {
@@ -57,6 +61,15 @@ export class BundleController {
     response.json (loadOrder);
     response.send();
     */
+  }
+
+  private static prepareEnvironmentJson(environment) {
+    const { name, version } = environment;
+    const bundles = environment.bundleLocations.map(manifest => {
+      // TODO :implement method
+      return;
+    })
+    return  { bundles, name, version };
   }
 
   private static bundleAddSuccessResponse(result, response: Response) {

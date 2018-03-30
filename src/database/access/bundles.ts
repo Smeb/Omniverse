@@ -32,7 +32,7 @@ export class BundleAccess {
 
   public static async getBundleWithDependencies(name: string, version: string = null) {
     const queryString = (version !=  null) ? { name, version }: { name };
-    const result = await BundleVersions.findOne({
+    return BundleVersions.findOne({
       include: [{
         as: "dependencies",
         include: [{
@@ -42,6 +42,9 @@ export class BundleAccess {
           }
         }],
         model: BundleVersions
+      },
+      {
+        model: BundleLocations
       }],
       where: queryString
     })
