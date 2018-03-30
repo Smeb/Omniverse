@@ -14,10 +14,10 @@ export default {
       },
       type: "array"
     },
-    hash: { type: "string" },
     name: { type: "string" },
     signature: { type: "string" },
+    uri: { type: "string" },
     version: { type: "string" }
   },
-  required: ["name", "hash", "version", "dependencies", "signature"]
+  required: ["name", "uri", "version", "dependencies", "signature"]
 };

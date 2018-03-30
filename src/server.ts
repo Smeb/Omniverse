@@ -35,7 +35,7 @@ export class Server {
   }
 
   private async database() {
-    //sequelize.sync({ force: true });
+    sequelize.sync({ force: true });
   }
 
   private routes() {

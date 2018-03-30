@@ -23,6 +23,7 @@
     "sequelize": "^4.34.0",
     "swaggerize": "^1.1.0",
     "tsoa": "^2.1.1",
+    "urijs": "^1.19.1",
     "winston": "^2.4.1",
     "winston-daily-rotate-file": "^3.0.1"
   },

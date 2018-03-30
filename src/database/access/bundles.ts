@@ -8,9 +8,27 @@ import { KeyAccess } from "./keys";
 import { Bundle } from "./models/bundle";
 import { Dependency } from "./models/dependency";
 import { sequelize } from "./sequelize";
-import { IBundleRecord, IBundleRegistration, IDependency } from "./types";
+import {
+  IBundleRecord,
+  IBundleRegistration,
+  IBundleUpdate,
+  IDependency
+} from "./types";
 
 export class BundleAccess {
+  public static async fromName(name: string) {
+    const result = await Bundle.findOne({
+      raw: true,
+      where: { name, latest: "t" }
+    });
+
+    if (result == null) {
+      return null;
+    }
+
+    return result;
+  }
+
   public static async fromNameVersionPair(name: string, version: string) {
     const result = await Bundle.findOne({
       raw: true,
@@ -25,24 +43,36 @@ export class BundleAccess {
   }
 
   public static async bundleDependencies(bundle: IBundleRecord) {
-    const dependency = await Dependency.findAll({
-      include: [Bundle],
-      where: {
-        Dependent: bundle.id
+    const dependencyIds = [];
+    let nextId = bundle.id;
+    let query;
+    do {
+      query = await Dependency.findOne({
+        attributes: ["dependency"],
+        where: { dependent: nextId }
+      });
+
+      if (query === null) {
+        break;
       }
-    });
 
-    console.log(dependency);
+      nextId = query.dependency;
+      dependencyIds.push(nextId);
+    } while (nextId);
 
-    throw new UserError("Not fully implemented");
+    const dependencyQueries = await Promise.all(
+      dependencyIds.map(async id => {
+        return Bundle.findOne({
+          where: { id }
+        });
+      })
+    );
+
+    return dependencyQueries.map(q => q.dataValues);
   }
 
   public static async registerBundle(registration: IBundleRegistration) {
-    const authenticated = await BundleAccess.authenticate(registration);
-
-    if (authenticated === false) {
-      throw new UserError("Authentication failed");
-    }
+    await BundleAccess.authenticateRegistration(registration);
 
     const version = new Version(registration);
 
@@ -56,9 +86,7 @@ export class BundleAccess {
     );
 
     if (dependencyIds == null) {
-      throw new UserError(
-        "Named dependencies were missing in the database"
-      );
+      throw new UserError("Named dependencies were missing in the database");
     }
 
     await sequelize
@@ -80,6 +108,19 @@ export class BundleAccess {
     return;
   }
 
+  public static async updateBundle(update: IBundleUpdate) {
+    this.authenticateUpdate(update);
+
+    const { name, uri, version } = update;
+
+    const bundleVersion = await this.fromNameVersionPair(name, version)
+    if (bundleVersion) {
+      return bundleVersion.updateAttributes({ uri });
+    } else {
+      throw new UserError(bundleVersionNotFound(name, version));
+    }
+  }
+
   public static getLatestVersion(bundleName: string) {
     return Bundle.findOne({
       where: {
@@ -89,45 +130,24 @@ export class BundleAccess {
     });
   }
 
-  private static async authenticate(registration: IBundleRegistration) {
-    const { name, version, hash, dependencies, signature } = registration;
+  private static authenticateUpdate(update: IBundleUpdate) {
+    const { name, version, uri, signature } = update;
 
-    const bundleNamespace = name.split(".")[0];
-    const publicKey = await KeyAccess.getKey(bundleNamespace);
+    const message = name + version + uri;
 
-    if (publicKey == null) {
-      throw new UserError(
-        "Bundle namespace hasn't been registered in the database"
-      );
-    }
-
-    const verifier = crypto.createVerify("SHA256");
-
-    const message = BundleAccess.formatMessage(
-      name,
-      version,
-      hash,
-      dependencies
-    );
-    verifier.update(message);
-
-    const signatureFromBase64 = Buffer.from(signature, "base64");
-
-    return verifier.verify(publicKey, signatureFromBase64);
+    return KeyAccess.authenticateBundleFromName(name, message, signature);
   }
 
-  private static formatMessage(
-    name: string,
-    version: string,
-    hash: string,
-    dependencies: IDependency[]
-  ) {
-    return (
+  private static authenticateRegistration(registration: IBundleRegistration) {
+    const { name, version, uri, dependencies, signature } = registration;
+
+    const message =
       name +
       version +
-      hash +
-      dependencies.map(dependency => dependency.name + dependency.version)
-    );
+      uri +
+      dependencies.map(dependency => dependency.name + dependency.version);
+
+    return KeyAccess.authenticateBundleFromName(name, message, signature);
   }
 
   private static insertBundleTransaction(
@@ -136,16 +156,16 @@ export class BundleAccess {
     dependencyIds: number[],
     transaction
   ) {
-    const { name, version, hash } = registration;
+    const { name, version, uri } = registration;
     const bundleNamespace = name.split(".")[0];
 
     return Bundle.create(
       {
         bundleNamespace,
-        hash,
         latest: isLatest,
         name,
-        version,
+        uri,
+        version
       },
       { transaction }
     )
@@ -228,3 +248,6 @@ export class BundleAccess {
     return (dependencyIdResults as any[]).map(result => result.id);
   }
 }
+
+const bundleVersionNotFound = (name, version) =>
+  `Bundle (${name}, ${version}) pair doesn't exist in the database`;

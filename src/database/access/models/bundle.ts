@@ -16,7 +16,7 @@ export const Bundle = sequelize.define(
         notEmpty: true
       }
     },
-    hash: {
+    uri: {
       type: Sequelize.STRING,
       unique: true,
       allowNull: false,
@@ -55,7 +55,7 @@ export const Bundle = sequelize.define(
         ) {
           throw new Error("Bundle namespace should be a prefix of bundle name");
         }
-      }
+      },
     },
     indexes: [
       {

@@ -9,19 +9,10 @@ import UserError from "../../errors/user";
 import { trimValidationMessage } from "../../errors/utils/formatting";
 
 export class KeyAccess {
-  public static async getKey(bundleName: string) {
-    const query = await Key.findOne({ where: { name: bundleName } });
-
-    if (query == null) {
-      return null;
-    }
-
-    return query.dataValues.key;
-  }
-
   public static async create(registration: IKeyRegistration) {
     // TODO: Add authentication logic to test against server admin key
     const { bundleNamespace } = registration;
+
     if (!bundleNamespaceRegex.test(bundleNamespace)) {
       throw new UserError("Bundle namespace should be alphanumeric");
     }
@@ -29,7 +20,7 @@ export class KeyAccess {
     try {
       const key = this.decodeAndVerifyKey(registration);
       const result = await Key.create({ bundleNamespace, key });
-      return result.dataValues.name;
+      return result.dataValues.bundleNamespace;
     } catch (err) {
       if (err instanceof UniqueConstraintError) {
         throw new UserError(`Bundle name has already been registered`, err);
@@ -40,6 +31,42 @@ export class KeyAccess {
         throw err;
       }
     }
+  }
+
+  public static async authenticateBundleFromName(name: string, message: string, signature: string) {
+    const bundleNamespace = this.namespaceFromName(name);
+
+    const publicKey = await KeyAccess.getKey(bundleNamespace);
+
+    if (publicKey == null) {
+      throw new UserError(
+        "Bundle namespace hasn't been registered in the database"
+      );
+    }
+
+    const verifier = crypto.createVerify("SHA256");
+
+    verifier.update(message);
+
+    const signatureFromBase64 = Buffer.from(signature, "base64");
+
+    if(!verifier.verify(publicKey, signatureFromBase64)) {
+      throw new UserError("Authentication Failed");
+    }
+  }
+
+  private static namespaceFromName(name: string) {
+    return name.split(".")[0];
+  }
+
+  private static async getKey(bundleNamespace: string) {
+    const query = await Key.findOne({ where: { bundleNamespace } });
+
+    if (query == null) {
+      return null;
+    }
+
+    return query.dataValues.key;
   }
 
   private static decodeAndVerifyKey(registration: IKeyRegistration) {
