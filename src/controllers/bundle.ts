@@ -47,15 +47,16 @@ export class BundleController {
       throw new UserError(bundleNotFound(name));
     }
 
-    const dependencies = await BundleAccess.bundleDependencies(bundle);
+    /*
     const loadOrder = [bundle, ...dependencies].map(item => {
-      const { name, version, uri } = item;
-      return { name, version, uri };
+      const { name, version } = item;
+      return { name, version };
     });
 
     response.status(200);
     response.json (loadOrder);
     response.send();
+    */
   }
 
   private static bundleAddSuccessResponse(result, response: Response) {

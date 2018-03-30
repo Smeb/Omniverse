@@ -5,10 +5,17 @@ export interface IDependency {
 
 export interface IBundleRegistration {
   dependencies: IDependency[];
+  bundles: IBundleInstance[];
   signature: string;
   name: string;
-  uri: string;
   version: string;
+}
+
+export interface IBundleInstance {
+  type: string;
+  uri: string;
+  crc: string;
+  hash: string;
 }
 
 export interface IBundleRecord {

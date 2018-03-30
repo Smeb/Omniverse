@@ -6,19 +6,11 @@ import { Key } from "./key";
 import { versionRegex } from "../datatypes/version";
 import { sequelize } from "../sequelize";
 
-export const Bundle = sequelize.define(
+export const BundleVersions = sequelize.define(
   "bundleVersions",
   {
     name: {
       type: Sequelize.STRING,
-      allowNull: false,
-      validate: {
-        notEmpty: true
-      }
-    },
-    uri: {
-      type: Sequelize.STRING,
-      unique: true,
       allowNull: false,
       validate: {
         notEmpty: true
@@ -73,7 +65,7 @@ export const Bundle = sequelize.define(
   }
 );
 
-Bundle.belongsTo(Key, {
+BundleVersions.belongsTo(Key, {
   foreignKey: { name: "bundleNamespace", allowNull: false },
   onDelete: "CASCADE"
 });

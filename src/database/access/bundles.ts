@@ -5,7 +5,8 @@ import UserError from "../../errors/user";
 
 import { Version } from "./datatypes/version";
 import { KeyAccess } from "./keys";
-import { Bundle } from "./models/bundle";
+import { BundleLocations } from "./models/bundleLocations";
+import { BundleVersions } from "./models/bundleVersions";
 import { Dependency } from "./models/dependency";
 import { sequelize } from "./sequelize";
 import {
@@ -17,7 +18,7 @@ import {
 
 export class BundleAccess {
   public static async fromName(name: string) {
-    const result = await Bundle.findOne({
+    const result = await BundleVersions.findOne({
       raw: true,
       where: { name, latest: "t" }
     });
@@ -29,8 +30,25 @@ export class BundleAccess {
     return result;
   }
 
+  public static async getBundleWithDependencies(name: string, version: string = null) {
+    const queryString = (version !=  null) ? { name, version }: { name };
+    const result = await BundleVersions.findOne({
+      include: [{
+        as: "dependencies",
+        include: [{
+          model: BundleLocations,
+          where: {
+            type: "dll"
+          }
+        }],
+        model: BundleVersions
+      }],
+      where: queryString
+    })
+  }
+
   public static async fromNameVersionPair(name: string, version: string) {
-    const result = await Bundle.findOne({
+    const result = await BundleVersions.findOne({
       raw: true,
       where: { name, version }
     });
@@ -40,35 +58,6 @@ export class BundleAccess {
     }
 
     return result;
-  }
-
-  public static async bundleDependencies(bundle: IBundleRecord) {
-    const dependencyIds = [];
-    let nextId = bundle.id;
-    let query;
-    do {
-      query = await Dependency.findOne({
-        attributes: ["dependency"],
-        where: { dependent: nextId }
-      });
-
-      if (query === null) {
-        break;
-      }
-
-      nextId = query.dependency;
-      dependencyIds.push(nextId);
-    } while (nextId);
-
-    const dependencyQueries = await Promise.all(
-      dependencyIds.map(async id => {
-        return Bundle.findOne({
-          where: { id }
-        });
-      })
-    );
-
-    return dependencyQueries.map(q => q.dataValues);
   }
 
   public static async registerBundle(registration: IBundleRegistration) {
@@ -89,23 +78,11 @@ export class BundleAccess {
       throw new UserError("Named dependencies were missing in the database");
     }
 
-    await sequelize
-      .transaction(transaction =>
-        BundleAccess.insertBundleTransaction(
-          registration,
-          isLatest,
-          dependencyIds,
-          transaction
-        )
-      )
-      .catch(UniqueConstraintError, err => {
-        const { name } = registration;
-        throw new UserError(
-          `Bundle (${name}, ${version.toString()}) already exists`
-        );
-      });
-
-    return;
+    return BundleAccess.insertBundleTransaction(
+      registration,
+      isLatest,
+      dependencyIds
+    );
   }
 
   public static async updateBundle(update: IBundleUpdate) {
@@ -113,7 +90,7 @@ export class BundleAccess {
 
     const { name, uri, version } = update;
 
-    const bundleVersion = await this.fromNameVersionPair(name, version)
+    const bundleVersion = await this.fromNameVersionPair(name, version);
     if (bundleVersion) {
       return bundleVersion.updateAttributes({ uri });
     } else {
@@ -122,7 +99,7 @@ export class BundleAccess {
   }
 
   public static getLatestVersion(bundleName: string) {
-    return Bundle.findOne({
+    return BundleVersions.findOne({
       where: {
         latest: true,
         name: bundleName
@@ -139,74 +116,81 @@ export class BundleAccess {
   }
 
   private static authenticateRegistration(registration: IBundleRegistration) {
-    const { name, version, uri, dependencies, signature } = registration;
+    const { name, version, bundles, dependencies, signature } = registration;
 
     const message =
       name +
       version +
-      uri +
+      bundles.map(
+        bundle => bundle.type + bundle.uri + bundle.crc + bundle.hash
+      ) +
       dependencies.map(dependency => dependency.name + dependency.version);
 
     return KeyAccess.authenticateBundleFromName(name, message, signature);
   }
 
-  private static insertBundleTransaction(
+  private static async insertBundleTransaction(
     registration: IBundleRegistration,
-    isLatest: boolean,
-    dependencyIds: number[],
-    transaction
+    latest: boolean,
+    dependencyIds: number[]
   ) {
-    const { name, version, uri } = registration;
+    const { name, version, bundles } = registration;
     const bundleNamespace = name.split(".")[0];
 
-    return Bundle.create(
-      {
-        bundleNamespace,
-        latest: isLatest,
-        name,
-        uri,
-        version
-      },
-      { transaction }
-    )
-      .then(bundle => {
-        const dependentBundleId = bundle.get("id");
+    const transaction = await sequelize.transaction();
 
-        return Promise.all(
-          dependencyIds.map(dependencyId => {
+    try {
+      let bundleVersionId;
+      try {
+        const result = await BundleVersions.create(
+          { bundleNamespace, latest, name, version },
+          { transaction }
+        );
+
+        bundleVersionId = result.id;
+      } catch (e) {
+        if (e instanceof UniqueConstraintError) {
+          throw new UserError(bundleVersionAlreadyExists(name, version));
+        }
+        throw e;
+      }
+
+      try {
+        await Promise.all(
+          bundles.map(async bundle => {
+            return BundleLocations.create(
+              { ...bundle, bundleVersionId },
+              { transaction }
+            );
+          })
+        );
+      } catch (e) {
+        if (e instanceof UniqueConstraintError) {
+          throw new UserError(duplicateTypesInBundle());
+        }
+        throw e;
+      }
+
+      try {
+        await Promise.all(
+          dependencyIds.map(async dependency => {
             return Dependency.create(
               {
-                dependency: dependencyId,
-                dependent: dependentBundleId
+                dependency,
+                dependent: bundleVersionId
               },
               { transaction }
             );
           })
         );
-      })
-      .then(() => {
-        if (isLatest) {
-          return BundleAccess.setOtherBundleVersionsToFalse(
-            name,
-            version,
-            transaction
-          );
-        }
-      });
-  }
-
-  private static async getBundleDependencyChain(id) {
-    const dependencyInformation = await Dependency.find({
-      where: { dependent: id }
-    });
-
-    if (dependencyInformation == null) {
-      return [];
+      } catch (e) {
+        throw e;
+      }
+      return transaction.commit();
+    } catch (e) {
+      await transaction.rollback();
+      throw e;
     }
-
-    const { dependency } = dependencyInformation.dataValues;
-
-    return [dependency, ...BundleAccess.getBundleDependencyChain(dependency)];
   }
 
   private static setOtherBundleVersionsToFalse(
@@ -214,7 +198,7 @@ export class BundleAccess {
     version: string,
     transaction
   ) {
-    return Bundle.update(
+    return BundleVersions.update(
       {
         latest: false
       },
@@ -248,6 +232,12 @@ export class BundleAccess {
     return (dependencyIdResults as any[]).map(result => result.id);
   }
 }
+
+const duplicateTypesInBundle = () =>
+  "Bundle contained duplicate types of 'env' or 'dll'"
+
+const bundleVersionAlreadyExists = (name, version) =>
+  `Bundle (${name}, ${version}) already exists in the database`;
 
 const bundleVersionNotFound = (name, version) =>
   `Bundle (${name}, ${version}) pair doesn't exist in the database`;

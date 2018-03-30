@@ -2,7 +2,7 @@
 import * as Sequelize from "sequelize";
 
 
-import { Bundle } from "./bundle";
+import { BundleVersions } from "./bundleVersions";
 
 import { sequelize } from "../sequelize";
 
@@ -17,4 +17,4 @@ export const Dependency = sequelize.define("bundleDependencies", {
   }
 });
 
-Bundle.belongsToMany(Bundle, { as: "dependency", through: Dependency, foreignKey: "dependent", otherKey: "dependency" });
+BundleVersions.belongsToMany(BundleVersions, { as: "dependencies", through: Dependency, foreignKey: "dependent", otherKey: "dependency" });
