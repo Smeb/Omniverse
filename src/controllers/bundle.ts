@@ -25,7 +25,7 @@ export class BundleController {
   public static async update(
     request: Request,
     response: Response
-  ): Promise<void>  {
+  ): Promise<void> {
     const update: IBundleUpdate = request.body;
     await BundleAccess.updateBundle(update).then(result => {
       BundleController.bundleUpdateSuccessResponse(result, response);
@@ -36,7 +36,10 @@ export class BundleController {
     const name = request.get("name");
     const version = request.get("version");
 
-    const environment = await BundleAccess.getBundleWithDependencies(name, version);
+    const environment = await BundleAccess.getBundleWithDependencies(
+      name,
+      version
+    );
 
     if (environment == null) {
       if (version != null) {
@@ -46,30 +49,36 @@ export class BundleController {
       }
     }
 
-    console.log(environment);
-
-    BundleController.prepareEnvironmentJson(environment);
-    throw new UserError("Route not implemented yet");
-
-    /*
-    const loadOrder = [bundle, ...dependencies].map(item => {
-      const { name, version } = item;
-      return { name, version };
-    });
+    const environmentManifest = BundleController.prepareEnvironmentJson(
+      environment
+    );
 
     response.status(200);
-    response.json (loadOrder);
+    response.json(environmentManifest);
     response.send();
-    */
+  }
+
+  private static formatBundle(bundleLocations) {
+    return bundleLocations.map(bundleManifest => {
+      const { crc, hash, type, uri } = bundleManifest;
+      return { crc, hash, type, uri };
+    });
   }
 
   private static prepareEnvironmentJson(environment) {
-    const { name, version } = environment;
-    const bundles = environment.bundleLocations.map(manifest => {
-      // TODO :implement method
-      return;
-    })
-    return  { bundles, name, version };
+    const versionManifest = BundleController.prepareVersionManifest(environment);
+
+    const dependencies = environment.dependencies.map(
+      BundleController.prepareVersionManifest
+    );
+
+    return { ...versionManifest, dependencies };
+  }
+
+  private static prepareVersionManifest(environmentVersion) {
+    const { name, version, bundleLocations } = environmentVersion;
+    const bundles = BundleController.formatBundle(bundleLocations);
+    return { name, version, bundles };
   }
 
   private static bundleAddSuccessResponse(result, response: Response) {

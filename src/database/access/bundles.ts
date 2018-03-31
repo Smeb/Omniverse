@@ -36,6 +36,7 @@ export class BundleAccess {
       include: [{
         as: "dependencies",
         include: [{
+          attributes: ["crc", "hash", "type", "uri"],
           model: BundleLocations,
           where: {
             type: "dll"
@@ -44,6 +45,7 @@ export class BundleAccess {
         model: BundleVersions
       },
       {
+        attributes: ["crc", "hash", "type", "uri"],
         model: BundleLocations
       }],
       where: queryString
