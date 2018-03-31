@@ -32,7 +32,7 @@ module.exports = {
       }
     }, ["id"]);
 
-    return queryInterface.bulkInsert("bundleLocations", [{
+    return queryInterface.bulkInsert("bundleManifests", [{
       environmentVersionId: bundleAId,
       type: "env",
       hash: "bundleAehashenv",

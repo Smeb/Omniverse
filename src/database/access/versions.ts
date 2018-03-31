@@ -6,7 +6,7 @@ import UserError from "../../errors/user";
 import { Version } from "./datatypes/version";
 import { BundleManifests } from "./models/bundleManifests";
 import { Dependency, EnvironmentVersions } from "./models/environmentVersions";
-import { NamespacesAccess } from "./namespaces";
+import { NamespaceAccess } from "./namespaces";
 import { sequelize } from "./sequelize";
 import {
   IBundleRecord,
@@ -15,7 +15,7 @@ import {
   IDependency
 } from "./types";
 
-export class BundleAccess {
+export class VersionAccess {
   public static async fromName(name: string) {
     const result = await EnvironmentVersions.findOne({
       raw: true,
@@ -29,7 +29,7 @@ export class BundleAccess {
     return result;
   }
 
-  public static async getBundleWithDependencies(
+  public static async getVersionWithDependencies(
     name: string,
     version: string = null
   ) {
@@ -72,7 +72,7 @@ export class BundleAccess {
   }
 
   public static async registerBundle(registration: IBundleRegistration) {
-    // await BundleAccess.authenticateRegistration(registration);
+    // await VersionAccess.authenticateRegistration(registration);
 
     const version = new Version(registration);
 
@@ -81,13 +81,13 @@ export class BundleAccess {
     }
     const isLatest = await version.isLatest();
 
-    const dependencyIds = await BundleAccess.getDependencyIds(registration);
+    const dependencyIds = await VersionAccess.getDependencyIds(registration);
 
     if (dependencyIds == null) {
       throw new UserError("Named dependencies were missing in the database");
     }
 
-    return BundleAccess.insertBundleTransaction(
+    return VersionAccess.insertBundleTransaction(
       registration,
       isLatest,
       dependencyIds
@@ -121,7 +121,7 @@ export class BundleAccess {
 
     const message = name + version + uri;
 
-    return NamespacesAccess.authenticateBundleFromName(
+    return NamespaceAccess.authenticateBundleFromName(
       name,
       message,
       signature
@@ -139,7 +139,7 @@ export class BundleAccess {
       ) +
       dependencies.map(dependency => dependency.name + dependency.version);
 
-    return NamespacesAccess.authenticateBundleFromName(
+    return NamespaceAccess.authenticateBundleFromName(
       name,
       message,
       signature
@@ -188,7 +188,7 @@ export class BundleAccess {
       return transaction.commit();
     } catch (e) {
       await transaction.rollback();
-      BundleAccess.transactionsErrorMapper(e, registration);
+      VersionAccess.transactionsErrorMapper(e, registration);
       throw e;
     }
   }
@@ -245,11 +245,11 @@ export class BundleAccess {
     const dependencyIdResults = await Promise.all(
       registration.dependencies.map(dependency => {
         const { name, version } = dependency;
-        if (!BundleAccess.validateDependencyPrefix(registration.name, name)) {
+        if (!VersionAccess.validateDependencyPrefix(registration.name, name)) {
           throw new UserError("Environment dependency names must be prefixes of the environment name");
         }
 
-        return BundleAccess.fromNameVersionPair(name, version);
+        return VersionAccess.fromNameVersionPair(name, version);
       })
     );
 

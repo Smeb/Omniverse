@@ -7,9 +7,9 @@ import * as winston from "winston";
 import { JsonSchemaValidation } from "express-jsonschema";
 
 import UserError from "./errors/user";
-import { GetBundleRoute } from "./routes/get/bundle";
-import { PostBundleRoute } from "./routes/post/bundle";
+import { GetVersionRoute } from "./routes/get/version";
 import { PostNamespaceRoute } from "./routes/post/namespace";
+import { PostVersionRoute } from "./routes/post/version";
 
 import { sequelize } from "./database/access/sequelize";
 
@@ -35,14 +35,14 @@ export class Server {
   }
 
   private async database() {
-    // sequelize.sync({ force: true });
+    //sequelize.sync({ force: true });
   }
 
   private routes() {
     const router: express.Router = require("express-promise-router")();
 
-    GetBundleRoute.create(router);
-    PostBundleRoute.create(router);
+    GetVersionRoute.create(router);
+    PostVersionRoute.create(router);
     PostNamespaceRoute.create(router);
 
     this.errors(router);

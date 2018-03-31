@@ -11,7 +11,7 @@ import UserError from "../../errors/user";
 import { trimValidationMessage } from "../../errors/utils/formatting";
 import { INamespaceRegistration } from "../../routes/types";
 
-export class NamespacesAccess {
+export class NamespaceAccess {
   public static async create(registration: INamespaceRegistration) {
     // TODO: Add authentication logic to test against server admin key
     const { namespace } = registration;
@@ -43,7 +43,7 @@ export class NamespacesAccess {
   ) {
     const bundleNamespace = this.namespaceFromName(name);
 
-    const publicKey = await NamespacesAccess.getKey(bundleNamespace);
+    const publicKey = await NamespaceAccess.getKey(bundleNamespace);
 
     if (publicKey == null) {
       throw new UserError(

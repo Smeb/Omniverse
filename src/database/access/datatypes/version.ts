@@ -1,5 +1,5 @@
-import { BundleAccess } from "../bundles";
 import { IBundleRegistration } from "../types";
+import { VersionAccess } from "../versions";
 
 export const versionRegex = /^(\d{1,3}.){2}\d{1,3}$/;
 
@@ -20,7 +20,7 @@ export class Version {
   }
 
   public async isLatest() {
-    const latestVersion = await BundleAccess.getLatestVersion(this.name);
+    const latestVersion = await VersionAccess.getLatestVersion(this.name);
 
     if (latestVersion == null) {
       return true;

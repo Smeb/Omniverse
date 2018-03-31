@@ -1,4 +1,4 @@
-import { BundleController } from "../../controllers/bundle";
+import { VersionController } from "../../controllers/version";
 
 import { BaseRoute } from "../route";
 import updateBundleSchema from "../schemas/bundle-update";
@@ -11,7 +11,7 @@ export class UpdateBundleRoute extends BaseRoute {
     router.post(
       "/UPDATE/version",
       validate({ body: updateBundleSchema }),
-      BundleController.register
+      VersionController.update
     );
   }
 }

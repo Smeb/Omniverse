@@ -1,12 +1,12 @@
 import { BaseRoute } from "../route";
 
-import { BundleController } from "../../controllers/bundle";
+import { VersionController } from "../../controllers/version";
 
 import { Request, Response, Router } from "express";
 
-export class GetBundleRoute extends BaseRoute {
+export class GetVersionRoute extends BaseRoute {
   public static create(router: Router) {
-    router.get("/GET/Bundle", BundleController.getBundle);
+    router.get("/GET/version", VersionController.getBundle);
   }
 
   constructor() {

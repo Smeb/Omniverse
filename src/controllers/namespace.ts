@@ -1,4 +1,4 @@
-import { NamespacesAccess } from "../database/access/namespaces";
+import { NamespaceAccess } from "../database/access/namespaces";
 import { INamespaceRegistration } from "../routes/types";
 
 import { Request, Response } from "express";
@@ -10,7 +10,7 @@ export class NamespaceController {
     response: Response
 ) : Promise<void> {
     const registration: INamespaceRegistration = request.body;
-    await NamespacesAccess.create(registration)
+    await NamespaceAccess.create(registration)
       .then(result => NamespaceController.keyAddSuccessResponse(result, response));
   }
 
