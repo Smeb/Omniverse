@@ -1,7 +1,7 @@
 /* tslint:disable:object-literal-sort-keys */
 import * as Sequelize from "sequelize";
 
-import { BundleVersions } from "./bundleVersions";
+import { EnvironmentVersions } from "./environmentVersions";
 
 import { versionRegex } from "../datatypes/version";
 import { sequelize } from "../sequelize";
@@ -13,28 +13,41 @@ export const BundleLocations = sequelize.define(
       type: Sequelize.STRING,
       allowNull: false,
       validate: {
-        notEmpty: true
-      }
+        notEmpty: {
+          args: true,
+          msg: "bundle type cannot be an empty string"
+        }
+      },
+      unique: "versionIdType"
     },
     uri: {
       type: Sequelize.STRING,
       allowNull: false,
       validate: {
-        notEmpty: true
+        notEmpty: {
+          args: true,
+          msg: "bundle URI cannot be an empty string"
+        }
       }
     },
     crc: {
       type: Sequelize.STRING,
       allowNull: false,
       validate: {
-        notEmpty: true
+        notEmpty: {
+          args: true,
+          msg: "bundle CRC cannot be an empty string"
+        }
       }
     },
     hash: {
       type: Sequelize.STRING,
       allowNull: false,
       validate: {
-        notEmpty: true
+        notEmpty: {
+          args: true,
+          msg: "bundle hash cannot be an empty string"
+        }
       }
     }
   },
@@ -42,22 +55,16 @@ export const BundleLocations = sequelize.define(
     validate: {
       typeIsDllOrEnv() {
         if (this.type && (this.type !== "env" && this.type !== "dll")) {
-          throw new Error("Bundles can only contain environment or dll values");
+          throw new Error("Bundles can only be of type 'env' or 'dll'");
         }
       }
-    },
-    indexes: [
-      {
-        unique: true,
-        fields: ["bundleVersionId", "type"]
-      }
-    ]
+    }
   }
 );
 
-BundleLocations.belongsTo(BundleVersions, {
-  foreignKey: { allowNull: false },
+BundleLocations.belongsTo(EnvironmentVersions, {
+  foreignKey: { allowNull: false, unique: "versionIdType" },
   onDelete: "CASCADE"
 });
 
-BundleVersions.hasMany(BundleLocations);
+EnvironmentVersions.hasMany(BundleLocations);

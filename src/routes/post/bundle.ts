@@ -9,7 +9,7 @@ import { validate } from "express-jsonschema";
 export class PostBundleRoute extends BaseRoute {
   public static create(router: Router) {
     router.post(
-      "/POST/Bundle",
+      "/POST/version",
       validate({ body: registerBundleSchema }),
       BundleController.register
     );
