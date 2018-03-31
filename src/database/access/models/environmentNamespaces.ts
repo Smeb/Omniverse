@@ -6,7 +6,7 @@ import { sequelize } from "../sequelize";
 // Checks bundle namespace for alphanumeric characters
 export const namespaceRegex = /^[a-z0-9]+$/i;
 
-export const Key = sequelize.define("environmentNamespaces", {
+export const EnvironmentNamespaces = sequelize.define("environmentNamespaces", {
   namespace: {
     type: Sequelize.STRING,
     primaryKey: true,

@@ -9,7 +9,7 @@ import { JsonSchemaValidation } from "express-jsonschema";
 import UserError from "./errors/user";
 import { GetBundleRoute } from "./routes/get/bundle";
 import { PostBundleRoute } from "./routes/post/bundle";
-import { PostKeyRoute } from "./routes/post/key";
+import { PostNamespaceRoute } from "./routes/post/namespace";
 
 import { sequelize } from "./database/access/sequelize";
 
@@ -43,7 +43,7 @@ export class Server {
 
     GetBundleRoute.create(router);
     PostBundleRoute.create(router);
-    PostKeyRoute.create(router);
+    PostNamespaceRoute.create(router);
 
     this.errors(router);
 

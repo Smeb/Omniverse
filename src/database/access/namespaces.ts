@@ -1,15 +1,18 @@
 import * as crypto from "crypto";
 import { UniqueConstraintError, ValidationError } from "sequelize";
 
-import { Key, namespaceRegex } from "./models/key";
+import {
+  EnvironmentNamespaces,
+  namespaceRegex
+} from "./models/environmentNamespaces";
 import { sequelize } from "./sequelize";
-import { IKeyRegistration } from "./types";
 
 import UserError from "../../errors/user";
 import { trimValidationMessage } from "../../errors/utils/formatting";
+import { INamespaceRegistration } from "../../routes/types";
 
-export class KeyAccess {
-  public static async create(registration: IKeyRegistration) {
+export class NamespacesAccess {
+  public static async create(registration: INamespaceRegistration) {
     // TODO: Add authentication logic to test against server admin key
     const { namespace } = registration;
 
@@ -19,7 +22,7 @@ export class KeyAccess {
 
     try {
       const key = this.decodeAndVerifyKey(registration);
-      const result = await Key.create({ namespace, key });
+      const result = await EnvironmentNamespaces.create({ namespace, key });
       return result.dataValues.namespace;
     } catch (err) {
       if (err instanceof UniqueConstraintError) {
@@ -33,10 +36,14 @@ export class KeyAccess {
     }
   }
 
-  public static async authenticateBundleFromName(name: string, message: string, signature: string) {
+  public static async authenticateBundleFromName(
+    name: string,
+    message: string,
+    signature: string
+  ) {
     const bundleNamespace = this.namespaceFromName(name);
 
-    const publicKey = await KeyAccess.getKey(bundleNamespace);
+    const publicKey = await NamespacesAccess.getKey(bundleNamespace);
 
     if (publicKey == null) {
       throw new UserError(
@@ -50,7 +57,7 @@ export class KeyAccess {
 
     const signatureFromBase64 = Buffer.from(signature, "base64");
 
-    if(!verifier.verify(publicKey, signatureFromBase64)) {
+    if (!verifier.verify(publicKey, signatureFromBase64)) {
       throw new UserError("Authentication Failed");
     }
   }
@@ -60,7 +67,10 @@ export class KeyAccess {
   }
 
   private static async getKey(namespace: string) {
-    const query = await Key.findOne({ where: { namespace } });
+    const query = await EnvironmentNamespaces.findOne({
+      attributes: ["key"],
+      where: { namespace }
+    });
 
     if (query == null) {
       return null;
@@ -69,7 +79,7 @@ export class KeyAccess {
     return query.dataValues.key;
   }
 
-  private static decodeAndVerifyKey(registration: IKeyRegistration) {
+  private static decodeAndVerifyKey(registration: INamespaceRegistration) {
     try {
       const key = Buffer.from(registration.key, "base64").toString();
       crypto.publicEncrypt(key, Buffer.from("Test"));

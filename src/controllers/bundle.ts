@@ -1,7 +1,5 @@
 import { Request, Response } from "express";
 
-import { KeyController } from "./key";
-
 import { BundleAccess } from "../database/access/bundles";
 import {
   IBundleRecord,

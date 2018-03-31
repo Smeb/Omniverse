@@ -1,7 +1,7 @@
 /* tslint:disable:object-literal-sort-keys */
 import * as Sequelize from "sequelize";
 
-import { Key } from "./key";
+import { EnvironmentNamespaces } from "./environmentNamespaces";
 
 import { versionRegex } from "../datatypes/version";
 import { sequelize } from "../sequelize";
@@ -65,7 +65,7 @@ export const BundleVersions = sequelize.define(
   }
 );
 
-BundleVersions.belongsTo(Key, {
+BundleVersions.belongsTo(EnvironmentNamespaces, {
   foreignKey: { name: "bundleNamespace", allowNull: false },
   onDelete: "CASCADE"
 });

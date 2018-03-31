@@ -26,11 +26,6 @@ export interface IBundleRecord {
   isLatest: boolean;
 }
 
-export interface IKeyRegistration {
-  namespace: string;
-  key: string;
-};
-
 export interface IBundleUpdate {
   name: string;
   uri: string;

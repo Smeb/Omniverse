@@ -4,10 +4,10 @@ import { UniqueConstraintError, ValidationError } from "sequelize";
 import UserError from "../../errors/user";
 
 import { Version } from "./datatypes/version";
-import { KeyAccess } from "./keys";
 import { BundleLocations } from "./models/bundleLocations";
 import { BundleVersions } from "./models/bundleVersions";
 import { Dependency } from "./models/dependency";
+import { NamespacesAccess } from "./namespaces";
 import { sequelize } from "./sequelize";
 import {
   IBundleRecord,
@@ -117,7 +117,7 @@ export class BundleAccess {
 
     const message = name + version + uri;
 
-    return KeyAccess.authenticateBundleFromName(name, message, signature);
+    return NamespacesAccess.authenticateBundleFromName(name, message, signature);
   }
 
   private static authenticateRegistration(registration: IBundleRegistration) {
@@ -131,7 +131,7 @@ export class BundleAccess {
       ) +
       dependencies.map(dependency => dependency.name + dependency.version);
 
-    return KeyAccess.authenticateBundleFromName(name, message, signature);
+    return NamespacesAccess.authenticateBundleFromName(name, message, signature);
   }
 
   private static async insertBundleTransaction(
