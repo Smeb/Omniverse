@@ -4,7 +4,7 @@ import { BaseError, UniqueConstraintError, ValidationError } from "sequelize";
 import UserError from "../../errors/user";
 
 import { Version } from "./datatypes/version";
-import { BundleLocations } from "./models/bundleLocations";
+import { BundleManifests } from "./models/bundleManifests";
 import { Dependency, EnvironmentVersions } from "./models/environmentVersions";
 import { NamespacesAccess } from "./namespaces";
 import { sequelize } from "./sequelize";
@@ -41,7 +41,7 @@ export class BundleAccess {
           include: [
             {
               attributes: ["crc", "hash", "type", "uri"],
-              model: BundleLocations,
+              model: BundleManifests,
               where: {
                 type: "dll"
               }
@@ -51,7 +51,7 @@ export class BundleAccess {
         },
         {
           attributes: ["crc", "hash", "type", "uri"],
-          model: BundleLocations
+          model: BundleManifests
         }
       ],
       where: queryString
@@ -166,7 +166,7 @@ export class BundleAccess {
         {
           include: [
             {
-              model: BundleLocations
+              model: BundleManifests
             }
           ],
           transaction
@@ -211,7 +211,7 @@ export class BundleAccess {
       if (error instanceof UniqueConstraintError) {
         throw new UserError(environmentVersionAlreadyExists(name, version));
       }
-    } else if (firstError.instance instanceof BundleLocations) {
+    } else if (firstError.instance instanceof BundleManifests) {
       if (error instanceof UniqueConstraintError) {
         throw new UserError(duplicateTypesInEnvironment());
       }

@@ -6,8 +6,8 @@ import { EnvironmentVersions } from "./environmentVersions";
 import { versionRegex } from "../datatypes/version";
 import { sequelize } from "../sequelize";
 
-export const BundleLocations = sequelize.define(
-  "bundleLocations",
+export const BundleManifests = sequelize.define(
+  "bundleManifests",
   {
     type: {
       type: Sequelize.STRING,
@@ -62,9 +62,9 @@ export const BundleLocations = sequelize.define(
   }
 );
 
-BundleLocations.belongsTo(EnvironmentVersions, {
+BundleManifests.belongsTo(EnvironmentVersions, {
   foreignKey: { allowNull: false, unique: "versionIdType" },
   onDelete: "CASCADE"
 });
 
-EnvironmentVersions.hasMany(BundleLocations);
+EnvironmentVersions.hasMany(BundleManifests);
