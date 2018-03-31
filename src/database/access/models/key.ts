@@ -4,10 +4,10 @@ import * as Sequelize from "sequelize";
 import { sequelize } from "../sequelize";
 
 // Checks bundle namespace for alphanumeric characters
-export const bundleNamespaceRegex = /^[a-z0-9]+$/i;
+export const namespaceRegex = /^[a-z0-9]+$/i;
 
-export const Key = sequelize.define("bundleKey", {
-  bundleNamespace: {
+export const Key = sequelize.define("environmentNamespaces", {
+  namespace: {
     type: Sequelize.STRING,
     primaryKey: true,
     allowNull: false,
@@ -26,8 +26,8 @@ export const Key = sequelize.define("bundleKey", {
 {
   validate: {
     keyNameIsAlphanumeric: () => {
-      if (this.bundleNamespace && bundleNamespaceRegex.test(this.bundleNamespace)) {
-        throw new Error("Namespace failed validation");
+      if (this.namespace && namespaceRegex.test(this.namespace)) {
+        throw new Error("Environment namespace failed validation");
       }
     }
   }

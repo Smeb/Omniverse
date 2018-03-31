@@ -27,7 +27,7 @@ export interface IBundleRecord {
 }
 
 export interface IKeyRegistration {
-  bundleNamespace: string;
+  namespace: string;
   key: string;
 };
 
