@@ -1,4 +1,4 @@
-import { VersionController } from "../../controllers/version";
+import { registerVersion } from "../../controllers/version";
 
 import { BaseRoute } from "../route";
 import registerBundleSchema from "../schemas/bundle-registration";
@@ -11,7 +11,7 @@ export class PostVersionRoute extends BaseRoute {
     router.post(
       "/POST/version",
       validate({ body: registerBundleSchema }),
-      VersionController.register
+      registerVersion
     );
   }
 }

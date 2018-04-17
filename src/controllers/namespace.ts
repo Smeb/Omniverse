@@ -4,17 +4,16 @@ import { INamespaceRegistration } from "../routes/types";
 import { Request, Response } from "express";
 import sequelize from "sequelize";
 
-export class NamespaceController {
-  public static async registerNamespace(
-    request: Request,
-    response: Response
-) : Promise<void> {
-    const registration: INamespaceRegistration = request.body;
-    await NamespaceAccess.create(registration)
-      .then(result => NamespaceController.keyAddSuccessResponse(result, response));
-  }
+export async function registerNamespace(
+  request: Request,
+  response: Response
+): Promise<void> {
+  const registration: INamespaceRegistration = request.body;
+  await NamespaceAccess.create(registration).then(result =>
+    keyAddSuccessResponse(result, response)
+  );
+}
 
-  private static keyAddSuccessResponse(result: string, response: Response) {
-    response.status(201).send(`Environment namespace ${result} registered.`);
-  }
+function keyAddSuccessResponse(result: string, response: Response) {
+  response.status(201).send(`Environment namespace ${result} registered.`);
 }

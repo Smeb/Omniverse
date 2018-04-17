@@ -3,8 +3,8 @@ import * as Sequelize from "sequelize";
 
 import { sequelize } from "../sequelize";
 
-// Checks bundle namespace for alphanumeric characters
-export const namespaceRegex = /^[a-z0-9]+$/i;
+// Checks bundle namespace for alphanumeric groups separated by periods
+export const namespaceRegex = /^[a-z0-9]+(\.[a-z0-9]+)*$/;
 
 export const EnvironmentNamespaces = sequelize.define("environmentNamespaces", {
   namespace: {

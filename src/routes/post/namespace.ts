@@ -1,4 +1,4 @@
-import { NamespaceController } from "../../controllers/namespace";
+import { registerNamespace } from "../../controllers/namespace";
 
 import { BaseRoute } from "../route";
 import namespaceRegistrationSchema from "../schemas/namespace-registration";
@@ -11,7 +11,7 @@ export class PostNamespaceRoute extends BaseRoute {
     router.post(
       "/POST/namespace",
       validate({ body: namespaceRegistrationSchema }),
-      NamespaceController.registerNamespace
+      registerNamespace
     );
   }
 }

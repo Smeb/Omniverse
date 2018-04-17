@@ -1,5 +1,5 @@
-import { IBundleRegistration } from "../types";
-import { VersionAccess } from "../versions";
+import { IVersionRegistration } from "../../../routes/types";
+import { getLatestVersion } from "../versions";
 
 export const versionRegex = /^(\d{1,3}.){2}\d{1,3}$/;
 
@@ -8,7 +8,7 @@ export class Version {
   private name: string;
   private version: string;
 
-  constructor(registration: IBundleRegistration) {
+  constructor(registration: IVersionRegistration) {
     const { name, version } = registration;
     this.name = name;
     this.version = version;
@@ -20,7 +20,7 @@ export class Version {
   }
 
   public async isLatest() {
-    const latestVersion = await VersionAccess.getLatestVersion(this.name);
+    const latestVersion = await getLatestVersion(this.name);
 
     if (latestVersion == null) {
       return true;
