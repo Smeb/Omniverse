@@ -86,11 +86,7 @@ export async function registerVersion(registration: IVersionRegistration) {
     throw new UserError("Named dependencies were missing in the database");
   }
 
-  return insertVersionTransaction(
-    registration,
-    isLatest,
-    dependencyIds
-  );
+  return insertVersionTransaction(registration, isLatest, dependencyIds);
 }
 
 export async function updateVersion(update: IVersionUpdate) {
@@ -117,29 +113,22 @@ function authenticateUpdate(update: IVersionUpdate) {
 
   const message = name + version + uri;
 
-  return NamespaceAccess.authenticateVersionFromName(
-    name,
-    message,
-    signature
-  );
+  return NamespaceAccess.authenticateVersionFromName(name, message, signature);
 }
 
 function authenticateRegistration(registration: IVersionRegistration) {
   const { name, version, bundles, dependencies, signature } = registration;
 
-  const message =
-    name +
-    version +
-    bundles.map(
-      bundle => bundle.type + bundle.uri + bundle.crc + bundle.hash
-    ) +
-    dependencies.map(dependency => dependency.name + dependency.version);
+  const bundleString = bundles
+    .map(bundle => bundle.type + bundle.uri + bundle.crc + bundle.hash)
+    .join("");
 
-  return NamespaceAccess.authenticateVersionFromName(
-    name,
-    message,
-    signature
-  );
+  const dependencyString = dependencies
+    .map(dependency => dependency.name + dependency.version)
+    .join("");
+  const message = name + version + bundleString + dependencyString;
+
+  return NamespaceAccess.authenticateVersionFromName(name, message, signature);
 }
 
 async function insertVersionTransaction(
@@ -199,7 +188,7 @@ function transactionsErrorMap(
 
   // Validations can have custom error messages set
   if (error instanceof ValidationError) {
-    throw new UserError(firstError.message)
+    throw new UserError(firstError.message);
   }
 
   // Other errors need to be mapped into specific error messages
@@ -219,7 +208,9 @@ async function getDependencyIds(registration: IVersionRegistration) {
     registration.dependencies.map(dependency => {
       const { name, version } = dependency;
       if (!validateDependencyPrefix(registration.name, name)) {
-        throw new UserError("Environment dependency names must be prefixes of the environment name");
+        throw new UserError(
+          "Environment dependency names must be prefixes of the environment name"
+        );
       }
 
       return fromNameVersionPair(name, version);
@@ -234,7 +225,10 @@ async function getDependencyIds(registration: IVersionRegistration) {
   return (dependencyIdResults as any[]).map(result => result.id);
 }
 
-function validateDependencyPrefix(environmentName: string, dependencyName: string) {
+function validateDependencyPrefix(
+  environmentName: string,
+  dependencyName: string
+) {
   const environmentNameArray = environmentName.split(".");
   const dependencyNameArray = dependencyName.split(".");
 

@@ -42,7 +42,6 @@ export class NamespaceAccess {
     message: string,
     signature: string
   ) {
-    return true;
     const publicKey = await NamespaceAccess.getKey(name);
 
     if (publicKey == null) {
@@ -51,7 +50,7 @@ export class NamespaceAccess {
       );
     }
 
-    const verifier = crypto.createVerify("SHA256");
+    const verifier = crypto.createVerify("RSA-SHA256");
 
     verifier.update(message);
 
