@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 
+import { validateVersion } from "../database/access/datatypes/version";
 import * as VersionAccess from "../database/access/versions";
 import UserError from "../errors/user";
 import {
@@ -37,10 +38,16 @@ export async function getVersion(request: Request, response: Response) {
     throw new UserError("Request needs to contain name and version parameters");
   }
 
+  if(!validateVersion(version)) {
+    throw new UserError(`Version ${version} is not a valid version of the form x.x.x`);
+  }
+
   const environment = await VersionAccess.getVersionWithDependencies(
     name,
     version
   );
+
+  console.log(environment);
 
   if (environment == null) {
     throw new UserError(environmentVersionNotFound(name, version));
@@ -66,7 +73,8 @@ function prepareEnvironmentJson(environment) {
 }
 
 function prepareVersionManifest(environmentVersion) {
-  const { name, version, bundleManifests } = environmentVersion;
+  const { name } = environmentVersion.environmentName;
+  const { version, bundleManifests } = environmentVersion;
   const bundles = formatManifests(bundleManifests);
   return { name, version, bundles };
 }

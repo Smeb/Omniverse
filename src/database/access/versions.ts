@@ -1,8 +1,9 @@
 import * as crypto from "crypto";
 import { BaseError, UniqueConstraintError, ValidationError } from "sequelize";
 
-import { Version } from "./datatypes/version";
+import { compareVersions, validateVersion } from "./datatypes/version";
 import { BundleManifests } from "./models/bundleManifests";
+import { EnvironmentNames } from "./models/environmentNames";
 import { Dependency, EnvironmentVersions } from "./models/environmentVersions";
 import { NamespaceAccess } from "./namespaces";
 import { sequelize } from "./sequelize";
@@ -16,9 +17,10 @@ import {
 } from "../../routes/types";
 
 export async function fromName(name: string) {
-  const result = await EnvironmentVersions.findOne({
+  const result = await EnvironmentVersions.findAll({
+    include: { model: EnvironmentNames },
     raw: true,
-    where: { name, latest: "t" }
+    where: { name }
   });
 
   if (result == null) {
@@ -32,53 +34,54 @@ export async function getVersionWithDependencies(
   name: string,
   version: string
 ) {
-  const queryString = { name, version };
   return EnvironmentVersions.findOne({
     include: [
       {
-        as: "dependencies",
-        include: [
-          {
-            attributes: ["crc", "hash", "type", "uri"],
-            model: BundleManifests,
-            where: {
-              type: "dll"
-            }
-          }
-        ],
-        model: EnvironmentVersions
+        attributes: ["name"],
+        model: EnvironmentNames,
+        where: { name }
       },
       {
         attributes: ["crc", "hash", "type", "uri"],
         model: BundleManifests
+      },
+      {
+        as: "dependencies",
+        include: [
+          {
+            attributes: ["name"],
+            model: EnvironmentNames
+          },
+          {
+            attributes: ["crc", "hash", "type", "uri"],
+            model: BundleManifests,
+            where: {
+              "type": "dll"
+            }
+          }
+        ],
+        model: EnvironmentVersions
       }
     ],
-    where: queryString
+    where: { version }
   });
 }
 
-export async function fromNameVersionPair(name: string, version: string) {
-  const result = await EnvironmentVersions.findOne({
+export function fromNameVersionPair(name: string, version: string) {
+  return EnvironmentVersions.findOne({
+    include: { model: EnvironmentNames, where: { name } },
     raw: true,
-    where: { name, version }
+    where: { version }
   });
-
-  if (result == null) {
-    return null;
-  }
-
-  return result;
 }
 
 export async function registerVersion(registration: IVersionRegistration) {
-  await authenticateRegistration(registration);
+  const namespace = await authenticateRegistration(registration);
 
-  const version = new Version(registration);
 
-  if (!version.valid) {
+  if (!validateVersion(registration.version)) {
     throw new UserError("Environment version is incorrectly formatted");
   }
-  const isLatest = await version.isLatest();
 
   const dependencyIds = await getDependencyIds(registration);
 
@@ -86,7 +89,7 @@ export async function registerVersion(registration: IVersionRegistration) {
     throw new UserError("Named dependencies were missing in the database");
   }
 
-  return insertVersionTransaction(registration, isLatest, dependencyIds);
+  return insertVersionTransaction(registration, namespace, dependencyIds);
 }
 
 export async function updateVersion(update: IVersionUpdate) {
@@ -100,12 +103,6 @@ export async function updateVersion(update: IVersionUpdate) {
   } else {
     throw new UserError(environmentVersionNotFound(name, version));
   }
-}
-
-export async function getLatestVersion(name: string) {
-  return EnvironmentVersions.findOne({
-    where: { latest: true, name }
-  });
 }
 
 function authenticateUpdate(update: IVersionUpdate) {
@@ -133,16 +130,22 @@ function authenticateRegistration(registration: IVersionRegistration) {
 
 async function insertVersionTransaction(
   registration: IVersionRegistration,
-  latest: boolean,
+  namespace: string,
   dependencyIds: number[]
 ) {
   const { name, version, bundles } = registration;
-  const namespace = name.split(".")[0];
-  const environmentVersion = { namespace, latest, name, version };
+
+  let nameResult = await EnvironmentNames.findOne({ where: { name } });
 
   const transaction = await sequelize.transaction();
 
   try {
+    if (nameResult == null) {
+      nameResult = await EnvironmentNames.create({ name, namespace }, transaction);
+    }
+
+    const environmentVersion = { environmentNameId: nameResult.id, version };
+
     const { id } = await EnvironmentVersions.create(
       {
         ...environmentVersion,
@@ -172,8 +175,10 @@ async function insertVersionTransaction(
 
     return transaction.commit();
   } catch (e) {
-    await transaction.rollback();
-    transactionsErrorMap(e, registration);
+    transaction.rollback();
+    if (e.errors) {
+      transactionsErrorMap(e, registration);
+    }
     throw e;
   }
 }
@@ -188,7 +193,12 @@ function transactionsErrorMap(
 
   // Validations can have custom error messages set
   if (error instanceof ValidationError) {
-    throw new UserError(firstError.message);
+    if (error.errors.length === 2) {
+      // Custom validators on indexes aren't allowed, so we set a custom message
+      throw new UserError(`(${name}, ${version}) pair already exists in the database`);
+    } else {
+      throw new UserError(firstError.message);
+    }
   }
 
   // Other errors need to be mapped into specific error messages

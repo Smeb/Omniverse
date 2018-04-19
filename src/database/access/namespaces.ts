@@ -16,9 +16,10 @@ export class NamespaceAccess {
     // TODO: Add authentication logic to test against server admin key
     const { namespace } = registration;
 
-    console.log(namespace);
     if (!namespaceRegex.test(namespace)) {
-      throw new UserError("Environment namespace should be separated by periods");
+      throw new UserError(
+        "Environment namespace should be separated by periods"
+      );
     }
 
     try {
@@ -27,7 +28,10 @@ export class NamespaceAccess {
       return result.dataValues.namespace;
     } catch (err) {
       if (err instanceof UniqueConstraintError) {
-        throw new UserError(`Environment namespace has already been registered`, err);
+        throw new UserError(
+          `Environment namespace has already been registered`,
+          err
+        );
       } else if (err instanceof ValidationError) {
         const message = trimValidationMessage(err);
         throw new UserError(message, err);
@@ -42,13 +46,15 @@ export class NamespaceAccess {
     message: string,
     signature: string
   ) {
-    const publicKey = await NamespaceAccess.getKey(name);
+    const keyEntry = await NamespaceAccess.getKey(name);
 
-    if (publicKey == null) {
+    if (keyEntry == null) {
       throw new UserError(
         "Environment namespace hasn't been registered in the database"
       );
     }
+
+    const { key, namespace } = keyEntry;
 
     const verifier = crypto.createVerify("RSA-SHA256");
 
@@ -56,23 +62,28 @@ export class NamespaceAccess {
 
     const signatureFromBase64 = Buffer.from(signature, "base64");
 
-    if (!verifier.verify(publicKey, signatureFromBase64)) {
+    /*
+    if (!verifier.verify(key, signatureFromBase64)) {
       throw new UserError("Authentication Failed");
     }
+    */
+
+    return namespace;
   }
 
-  private static async getKey(name: string) {
-
-    while (name !== "") {
+  private static async getKey(namespace: string) {
+    while (namespace !== "") {
       const query = await EnvironmentNamespaces.findOne({
-        attributes: ["key"],
-        where: { namespace: name }
+        where: { namespace }
       });
 
       if (query == null) {
-        name = name.split('.').slice(0, -1).join('.');
+        namespace = namespace
+          .split(".")
+          .slice(0, -1)
+          .join(".");
       } else {
-        return query.dataValues.key;
+        return query;
       }
     }
     return null;

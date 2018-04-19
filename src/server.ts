@@ -35,7 +35,7 @@ export class Server {
   }
 
   private async database() {
-    //sequelize.sync({ force: true });
+    // sequelize.sync({ force: true });
   }
 
   private routes() {
@@ -67,6 +67,8 @@ export class Server {
 
     const error = `${logdir}/-requests`;
     const level = process.env.NODE_ENV === "development" ? "debug" : "info";
+
+    expressWinston.requestWhitelist.push("body");
 
     // Requests logging
     this.app.use(
