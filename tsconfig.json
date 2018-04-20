@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "lib": ["es7"],
+    "lib": ["es2015", "es7"],
     "sourceMap": true
   }
 }

@@ -3,15 +3,15 @@
 
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.bulkInsert("bundleKeys", [{
+    return queryInterface.bulkInsert("environmentNamespaces", [{
       key: "bundleAKey",
-      bundleNamespace: "sampleBundle",
+      namespace: "sampleBundle",
       createdAt: Sequelize.fn("NOW"),
       updatedAt: Sequelize.fn("NOW")
     }])
   },
 
   down: (queryInterface, Sequelize) => {
-    return queryInterface.bulkDelete("bundleKeys", null, {});
+    return queryInterface.bulkDelete("environmentNamespaces", null, {});
   }
 };

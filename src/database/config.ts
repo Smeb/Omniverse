@@ -11,7 +11,7 @@ module.exports = {
     dialect: "postgres"
   },
   test: {
-    username: "root",
+    username: "postgres",
     password: null,
     database: "omniverse_test",
     host: "127.0.0.1",
