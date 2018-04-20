@@ -23,10 +23,6 @@ export async function fromName(name: string) {
     where: { name }
   });
 
-  if (result == null) {
-    return null;
-  }
-
   return result;
 }
 
