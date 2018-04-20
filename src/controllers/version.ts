@@ -47,8 +47,6 @@ export async function getVersion(request: Request, response: Response) {
     version
   );
 
-  console.log(environment);
-
   if (environment == null) {
     throw new UserError(environmentVersionNotFound(name, version));
   }
@@ -59,6 +57,14 @@ export async function getVersion(request: Request, response: Response) {
 
   response.status(200);
   response.json(environmentManifest);
+  response.send();
+}
+
+export async function getVersions(request: Request, response: Response) {
+  const versions = await VersionAccess.getVersions();
+
+  response.status(200);
+  response.json(versions);
   response.send();
 }
 

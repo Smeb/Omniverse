@@ -8,6 +8,7 @@ import { JsonSchemaValidation } from "express-jsonschema";
 
 import UserError from "./errors/user";
 import { GetVersionRoute } from "./routes/get/version";
+import { GetVersionsRoute } from "./routes/get/versions";
 import { PostNamespaceRoute } from "./routes/post/namespace";
 import { PostVersionRoute } from "./routes/post/version";
 
@@ -42,6 +43,7 @@ export class Server {
     const router: express.Router = require("express-promise-router")();
 
     GetVersionRoute.create(router);
+    GetVersionsRoute.create(router);
     PostVersionRoute.create(router);
     PostNamespaceRoute.create(router);
 

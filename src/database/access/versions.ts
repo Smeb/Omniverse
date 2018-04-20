@@ -30,6 +30,32 @@ export async function fromName(name: string) {
   return result;
 }
 
+export async function getVersions() {
+  const nameResults = await EnvironmentNames.findAll();
+
+  const versionsListing = await nameResults.reduce(async (arrPromise, nameResult) => {
+    const arr = await arrPromise;
+
+    const { name } = nameResult;
+
+    const versionsQueryResults = await EnvironmentVersions.findAll({
+      attribute: ["version"],
+      include: {
+        model: EnvironmentNames,
+        where: { name }
+      }
+    });
+
+    const versions = versionsQueryResults.map(result => result.version);
+
+    arr.push({ name, versions });
+    return arr;
+  }, Promise.resolve([]));
+
+  return versionsListing;
+}
+
+
 export async function getVersionWithDependencies(
   name: string,
   version: string
