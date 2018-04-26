@@ -5,7 +5,7 @@ import { compareVersions, validateVersion } from "./datatypes/version";
 import { BundleManifests } from "./models/bundleManifests";
 import { EnvironmentNames } from "./models/environmentNames";
 import { Dependency, EnvironmentVersions } from "./models/environmentVersions";
-import { NamespaceAccess } from "./namespaces";
+import { authenticateVersionFromName } from "./namespaces";
 import { sequelize } from "./sequelize";
 
 import UserError from "../../errors/user";
@@ -132,7 +132,7 @@ function authenticateUpdate(update: IVersionUpdate) {
 
   const message = name + version + uri;
 
-  return NamespaceAccess.authenticateVersionFromName(name, message, signature);
+  return authenticateVersionFromName(name, message, signature);
 }
 
 function authenticateRegistration(registration: IVersionRegistration) {
@@ -147,7 +147,7 @@ function authenticateRegistration(registration: IVersionRegistration) {
     .join("");
   const message = name + version + bundleString + dependencyString;
 
-  return NamespaceAccess.authenticateVersionFromName(name, message, signature);
+  return authenticateVersionFromName(name, message, signature);
 }
 
 async function insertVersionTransaction(

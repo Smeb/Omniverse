@@ -16,7 +16,7 @@ export async function registerVersion(
 ): Promise<void> {
   const registration: IVersionRegistration = request.body;
   await VersionAccess.registerVersion(registration).then(result =>
-    versionAddSuccessResponse(result, response)
+    versionAddSuccessResponse(registration, response)
   );
 }
 
@@ -38,8 +38,10 @@ export async function getVersion(request: Request, response: Response) {
     throw new UserError("Request needs to contain name and version parameters");
   }
 
-  if(!validateVersion(version)) {
-    throw new UserError(`Version ${version} is not a valid version of the form x.x.x`);
+  if (!validateVersion(version)) {
+    throw new UserError(
+      `Version ${version} is not a valid version of the form x.x.x`
+    );
   }
 
   const environment = await VersionAccess.getVersionWithDependencies(
@@ -51,9 +53,7 @@ export async function getVersion(request: Request, response: Response) {
     throw new UserError(environmentVersionNotFound(name, version));
   }
 
-  const environmentManifest = prepareEnvironmentJson(
-    environment
-  );
+  const environmentManifest = prepareEnvironmentJson(environment);
 
   response.status(200);
   response.json(environmentManifest);
@@ -71,9 +71,7 @@ export async function getVersions(request: Request, response: Response) {
 function prepareEnvironmentJson(environment) {
   const versionManifest = prepareVersionManifest(environment);
 
-  const dependencies = environment.dependencies.map(
-    prepareVersionManifest
-  );
+  const dependencies = environment.dependencies.map(prepareVersionManifest);
 
   return { ...versionManifest, dependencies };
 }
@@ -92,15 +90,17 @@ function formatManifests(bundleManifests: IBundleManifest[]) {
   });
 }
 
-function versionAddSuccessResponse(result, response: Response) {
-  response.status(201).send("Environment version added successfully");
+function versionAddSuccessResponse(registration, response: Response) {
+  response
+    .status(201)
+    .json(
+      `Environment (${registration.name}, ${ registration.version }) added successfully`
+    );
 }
 
 function versionUpdateSuccessResponse(result, response: Response) {
   throw new UserError("Not implemented - response");
 }
 
-const environmentNotFound = name => `Environment ${name} doesn't exist in the database`;
-
 const environmentVersionNotFound = (name, version) =>
-  `Environment (${name}, ${version}) pair doesn't exist in the database`;
+  `Environment (${name}, ${version}) doesn't exist in the database`;

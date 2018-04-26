@@ -1,4 +1,4 @@
-import { NamespaceAccess } from "../database/access/namespaces";
+import { create } from "../database/access/namespaces";
 import { INamespaceRegistration } from "../routes/types";
 
 import { Request, Response } from "express";
@@ -9,11 +9,11 @@ export async function registerNamespace(
   response: Response
 ): Promise<void> {
   const registration: INamespaceRegistration = request.body;
-  await NamespaceAccess.create(registration).then(result =>
+  await create(registration).then(result =>
     keyAddSuccessResponse(result, response)
   );
 }
 
 function keyAddSuccessResponse(result: string, response: Response) {
-  response.status(201).send(`Environment namespace ${result} registered.`);
+  response.status(201).json(`Environment namespace ${result} registered.`);
 }

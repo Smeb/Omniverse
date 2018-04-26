@@ -1,29 +1,50 @@
 /* tslint:disable:object-literal-sort-keys */
 import * as fs from "fs";
 
+const errorMessages = [];
+if (process.env.DATABASE_USERNAME === undefined) {
+  errorMessages.push("Environment variable \"DATABASE_USERNAME\" is undefined");
+}
+
+if (process.env.DATABASE_PASSWORD === undefined) {
+  errorMessages.push("Environment variable \"DATABASE_PASSWORD\" is undefined");
+}
+
+if (process.env.DATABASE_HOSTNAME === undefined) {
+  errorMessages.push("Environment variable \"DATABASE_HOSTNAME\" is undefined");
+}
+
+if (process.env.DATABASE_PORT === undefined) {
+  errorMessages.push("Environment variable \"DATABASE_PORT\" is undefined");
+}
+
+if (errorMessages.length > 0) {
+  throw new Error(errorMessages.join(", "));
+}
+
 module.exports = {
   development: {
-    username: "postgres",
-    password: null,
+    username: process.env.DATABASE_USERNAME,
+    password: process.env.DATABASE_PASSWORD,
     database: "omniverse_development",
-    host: "127.0.0.1",
-    port: 5432,
+    host: process.env.DATABASE_HOSTNAME,
+    port: process.env.DATABASE_PORT,
     dialect: "postgres"
   },
   test: {
-    username: "postgres",
-    password: null,
+    username: process.env.DATABASE_USERNAME,
+    password: process.env.DATABASE_PASSWORD,
     database: "omniverse_test",
-    host: "127.0.0.1",
-    port: 5432,
+    host: process.env.DATABASE_HOSTNAME,
+    port: process.env.DATABASE_PORT,
     dialect: "postgres"
   },
   production: {
-    username: process.env.DB_USERNAME,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    host: process.env.DB_HOSTNAME,
-    port: process.env.DB_PORT,
+    username: process.env.DATABASE_USERNAME,
+    password: process.env.DATABASE_PASSWORD,
+    database: "omniverse_production",
+    host: process.env.DATABASE_HOSTNAME,
+    port: process.env.DATABASE_PORT,
     dialect: "postgres"
   }
 };

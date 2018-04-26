@@ -1,6 +1,7 @@
 export interface INamespaceRegistration {
   namespace: string;
   key: string;
+  signature: string;
 };
 
 export interface IDependency {

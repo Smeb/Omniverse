@@ -6,6 +6,8 @@ import * as winston from "winston";
 
 import { JsonSchemaValidation } from "express-jsonschema";
 
+import { serverPublicKey } from "./database/access/datatypes/server_key";
+
 import UserError from "./errors/user";
 import { GetVersionRoute } from "./routes/get/version";
 import { GetVersionsRoute } from "./routes/get/versions";
@@ -36,7 +38,10 @@ export class Server {
   }
 
   private async database() {
-    // sequelize.sync({ force: true });
+    if (serverPublicKey === undefined) {
+      throw new Error("Application server key not set correctly");
+    }
+    sequelize.sync();
   }
 
   private routes() {

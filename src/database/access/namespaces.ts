@@ -7,98 +7,107 @@ import {
 } from "./models/environmentNamespaces";
 import { sequelize } from "./sequelize";
 
+import { serverPublicKey } from "./datatypes/server_key";
+
 import UserError from "../../errors/user";
 import { trimValidationMessage } from "../../errors/utils/formatting";
 import { INamespaceRegistration } from "../../routes/types";
 
-export class NamespaceAccess {
-  public static async create(registration: INamespaceRegistration) {
-    // TODO: Add authentication logic to test against server admin key
-    const { namespace } = registration;
+export async function create(registration: INamespaceRegistration) {
+  authenticateNamespaceRegistration(registration);
+  const { namespace } = registration;
 
-    if (!namespaceRegex.test(namespace)) {
-      throw new UserError(
-        "Environment namespace should be separated by periods"
-      );
-    }
-
-    try {
-      const key = this.decodeAndVerifyKey(registration);
-      const result = await EnvironmentNamespaces.create({ namespace, key });
-      return result.dataValues.namespace;
-    } catch (err) {
-      if (err instanceof UniqueConstraintError) {
-        throw new UserError(
-          `Environment namespace has already been registered`,
-          err
-        );
-      } else if (err instanceof ValidationError) {
-        const message = trimValidationMessage(err);
-        throw new UserError(message, err);
-      } else {
-        throw err;
-      }
-    }
+  if (!namespaceRegex.test(namespace)) {
+    throw new UserError("Environment namespace should be a lowercase word");
   }
 
-  public static async authenticateVersionFromName(
-    name: string,
-    message: string,
-    signature: string
-  ) {
-    const keyEntry = await NamespaceAccess.getKey(name);
-
-    if (keyEntry == null) {
+  try {
+    const key = decodeAndVerifyKey(registration);
+    const result = await EnvironmentNamespaces.create({ namespace, key });
+    return result.dataValues.namespace;
+  } catch (err) {
+    if (err instanceof UniqueConstraintError) {
       throw new UserError(
-        "Environment namespace hasn't been registered in the database"
+        `Namespace "${namespace}" has already been registered`,
+        err
       );
+    } else if (err instanceof ValidationError) {
+      const message = trimValidationMessage(err);
+      throw new UserError(message, err);
+    } else {
+      throw err;
     }
+  }
+}
 
-    const { key, namespace } = keyEntry;
+export async function authenticateVersionFromName(
+  name: string,
+  message: string,
+  signature: string
+) {
+  const keyEntry = await getKey(name);
 
-    const verifier = crypto.createVerify("RSA-SHA256");
-
-    verifier.update(message);
-
-    const signatureFromBase64 = Buffer.from(signature, "base64");
-
-    /*
-    if (!verifier.verify(key, signatureFromBase64)) {
-      throw new UserError("Authentication Failed");
-    }
-    */
-
-    return namespace;
+  if (keyEntry == null) {
+    throw new UserError(
+      `No namespace which is a prefix of "${name}" has been registered in the database`
+    );
   }
 
-  private static async getKey(namespace: string) {
-    while (namespace !== "") {
-      const query = await EnvironmentNamespaces.findOne({
-        where: { namespace }
-      });
+  const { key, namespace } = keyEntry;
+  const decodedSignature = Buffer.from(signature, "base64");
 
-      if (query == null) {
-        namespace = namespace
-          .split(".")
-          .slice(0, -1)
-          .join(".");
-      } else {
-        return query;
-      }
-    }
-    return null;
+  authenticate(key, message, decodedSignature);
+
+  return namespace;
+}
+
+function authenticateNamespaceRegistration(
+  registration: INamespaceRegistration
+) {
+  const { namespace, key, signature } = registration;
+  const message = namespace + key;
+  const decodedSignature = Buffer.from(signature, "base64");
+
+  authenticate(serverPublicKey, message, signature);
+
+  return namespace;
+}
+
+function authenticate(key, message, signature) {
+  const verifier = crypto.createVerify("RSA-SHA256");
+  verifier.update(message);
+  if (!verifier.verify(serverPublicKey, signature)) {
+    throw new UserError("Authentication Failed");
   }
+}
 
-  private static decodeAndVerifyKey(registration: INamespaceRegistration) {
-    try {
-      const key = Buffer.from(registration.key, "base64").toString();
-      crypto.publicEncrypt(key, Buffer.from("Test"));
-      return key;
-    } catch (e) {
-      throw new UserError(
-        "Key should be sent as base64, decoded base64 should be .pem format",
-        e
-      );
+async function getKey(namespace: string) {
+  while (namespace !== "") {
+    const query = await EnvironmentNamespaces.findOne({
+      where: { namespace }
+    });
+
+    if (query == null) {
+      namespace = namespace
+        .split(".")
+        .slice(0, -1)
+        .join(".");
+    } else {
+      return query;
     }
+  }
+  return null;
+}
+
+function decodeAndVerifyKey(registration: INamespaceRegistration) {
+  try {
+    const key = Buffer.from(registration.key, "base64").toString();
+    crypto.publicEncrypt(key, Buffer.from("Test"));
+    return key;
+  } catch (e) {
+    throw new UserError(
+      "Key should be sent as base64, decoded base64 should be .pem format",
+      e
+    );
   }
 }
