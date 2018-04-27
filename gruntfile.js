@@ -14,13 +14,21 @@ module.exports = function(grunt) {
         }
       },
     },
+    exec: {
+      test: "yarn test"
+    },
     watch: {
       ts: {
         files: ["src/\*\*/\*.ts"],
-        tasks: ["ts"]
+        tasks: ["exec", "ts"]
+      },
+      tests: {
+        files: ["test/\*\*/\*.ts"],
+        tasks: ["exec"]
       }
     }
   });
+  grunt.loadNpmTasks("grunt-exec");
   grunt.loadNpmTasks("grunt-contrib-watch");
   grunt.loadNpmTasks("grunt-ts");
 

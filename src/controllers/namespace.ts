@@ -15,5 +15,6 @@ export async function registerNamespace(
 }
 
 function keyAddSuccessResponse(result: string, response: Response) {
-  response.status(201).json(`Environment namespace ${result} registered.`);
+  response.status(201);
+  response.json(`Environment namespace ${result} registered.`);
 }

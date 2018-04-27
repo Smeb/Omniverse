@@ -1,14 +1,13 @@
 import { expect } from "chai";
+import { beforeEach, describe, it } from "mocha";
 import * as MockExpressRequest from "mock-express-request";
 import { stub } from "sinon";
 
 import {
+  environmentVersionLookupResult,
   requestHeaders,
-  versionLookupResult,
   versionLookupTransform
 } from "./fixtures/version";
-
-import UserError from "../../src/errors/user";
 
 const VersionAccessStubs = {
   getVersionWithDependencies: stub(),
@@ -18,8 +17,6 @@ const VersionAccessStubs = {
 const VersionController = proxyquire("../src/controllers/version", {
   "../database/access/versions": VersionAccessStubs
 });
-
-import { describe, it } from "mocha";
 
 const mockRequest = (method, url, headers, body = undefined) => {
   const request = new MockExpressRequest({ method, url, headers });
@@ -32,18 +29,25 @@ const mockRequest = (method, url, headers, body = undefined) => {
   return request;
 };
 
+
 describe("the version controller", () => {
+  beforeEach(() => {
+    VersionAccessStubs.getVersionWithDependencies.reset();
+    VersionAccessStubs.registerVersion.reset();
+  });
+
   describe("getVersion", () => {
-    it("returns", async () => {
+    it("returns a correctly formatted result as defined in fixtures", async () => {
       const response = {
         json: stub(),
         send: stub(),
         status: stub()
       };
+
       const request = mockRequest("GET", "/get/version", requestHeaders);
 
       VersionAccessStubs.getVersionWithDependencies.returns(
-        versionLookupResult
+        environmentVersionLookupResult
       );
 
       await VersionController.getVersion(request, response);
@@ -62,9 +66,24 @@ describe("the version controller", () => {
         await VersionController.getVersion(request, null);
         expect.fail();
       } catch (e) {
-        expect(e).to.be.an.instanceof(Error);
         expect(e.message.includes(requestHeaders.name)).to.equal(true);
         expect(e.message.includes(requestHeaders.version)).to.equal(true);
+      }
+    });
+
+    it("throws an error if the version number formatting is not x.x.x", async () => {
+      const version = "212"
+      const request = mockRequest("GET", "/get/version", {...requestHeaders, version });
+
+      VersionAccessStubs.getVersionWithDependencies.returns(null);
+
+      try {
+        await VersionController.getVersion(request, null);
+        expect.fail();
+      } catch (e) {
+        expect(e).to.be.an.instanceof(Error);
+        expect(e.message.includes( "x.x.x")).to.equal(true);
+        expect(e.message.includes(version)).to.equal(true);
       }
     });
 
@@ -89,11 +108,14 @@ describe("the version controller", () => {
 
   describe("registerVersion", () => {
     it("calls the registerVersion method of VersionAccess with the registration message", async () => {
-      const registration = "test-object";
+      const registration = {
+        name: "testName",
+        version: "0.0.1"
+      };
 
-      const sendStub = stub();
       const response = {
-        status: stub().returns({ send: sendStub })
+        json: stub(),
+        status: stub()
       };
 
       const request = mockRequest("GET", "/get/version", {}, registration);
@@ -101,8 +123,29 @@ describe("the version controller", () => {
       VersionAccessStubs.registerVersion.resolves();
       await VersionController.registerVersion(request, response)
       expect(VersionAccessStubs.registerVersion).to.be.calledWith(registration);
+    });
+
+    it("sends a 201 with response message in JSON if the registration suceeded", async () => {
+      const registration = {
+        name: "testName",
+        version: "0.0.1"
+      };
+
+      const response = {
+        json: stub(),
+        status: stub()
+      };
+
+      const request = mockRequest("GET", "/get/version", {}, registration);
+
+      VersionAccessStubs.registerVersion.resolves();
+      await VersionController.registerVersion(request, response)
+
       expect(response.status).to.be.calledWith(201);
-      expect(sendStub).to.be.calledWith("Environment version added successfully")
+
+      const jsonMessage = response.json.getCalls()[0].args[0];
+      expect(jsonMessage).to.contain(registration.name);
+      expect(jsonMessage).to.contain(registration.version);
     });
   });
 });

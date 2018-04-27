@@ -9,11 +9,9 @@ const config = sequelizeConfig[process.env.NODE_ENV];
 
 const { database, username, password } = config;
 
-
 export const sequelize = new Sequelize(database, username, password, config)
 
 sequelize.authenticate()
-  .then(() => console.log(`Database connection established on ${config.host}:${config.port}`))
   .catch(err => {
     throw new Error(`Couldn't connect to database on ${config.host}:${config.port}`)
   });

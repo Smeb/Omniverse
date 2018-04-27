@@ -10,14 +10,16 @@
     "server": "node ./bin/server",
     "dev": "NODE_ENV=development nodemon ./bin/server",
     "reseed": "sequelize db:seed:undo:all && sequelize db:seed:all",
-    "test": "NODE_ENV=test mocha --exit -r ts-node/register test/**/*.ts"
+    "test": "NODE_ENV=test mocha --exit -r ts-node/register \"test/**/*.ts\""
   },
   "dependencies": {
     "body-parser": "^1.18.2",
+    "dotenv": "^5.0.1",
     "express": "^4.16.2",
     "express-jsonschema": "^1.1.6",
     "express-promise-router": "^3.0.1",
     "express-winston": "^2.5.0",
+    "grunt-exec": "^3.0.0",
     "morgan": "^1.9.0",
     "pg": "^7.4.1",
     "pg-hstore": "^2.3.2",

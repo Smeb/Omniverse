@@ -16,16 +16,6 @@ import {
   IVersionUpdate
 } from "../../routes/types";
 
-export async function fromName(name: string) {
-  const result = await EnvironmentVersions.findAll({
-    include: { model: EnvironmentNames },
-    raw: true,
-    where: { name }
-  });
-
-  return result;
-}
-
 export async function getVersions() {
   const nameResults = await EnvironmentNames.findAll();
 
@@ -89,20 +79,13 @@ export async function getVersionWithDependencies(
   });
 }
 
-export function fromNameVersionPair(name: string, version: string) {
-  return EnvironmentVersions.findOne({
-    include: { model: EnvironmentNames, where: { name } },
-    raw: true,
-    where: { version }
-  });
-}
-
 export async function registerVersion(registration: IVersionRegistration) {
   const namespace = await authenticateRegistration(registration);
 
+  const { version } = registration;
 
-  if (!validateVersion(registration.version)) {
-    throw new UserError("Environment version is incorrectly formatted");
+  if (!validateVersion(version)) {
+    throw new UserError(`Environment version '${version}' is incorrectly formatted, should be x.x.x`);
   }
 
   const dependencyIds = await getDependencyIds(registration);
@@ -114,17 +97,12 @@ export async function registerVersion(registration: IVersionRegistration) {
   return insertVersionTransaction(registration, namespace, dependencyIds);
 }
 
-export async function updateVersion(update: IVersionUpdate) {
-  this.authenticateUpdate(update);
-
-  const { name, uri, version } = update;
-
-  const environmentVersion = await fromNameVersionPair(name, version);
-  if (version) {
-    return environmentVersion.updateAttributes({ uri });
-  } else {
-    throw new UserError(environmentVersionNotFound(name, version));
-  }
+function fromNameVersionPair(name: string, version: string) {
+  return EnvironmentVersions.findOne({
+    include: { model: EnvironmentNames, where: { name } },
+    raw: true,
+    where: { version }
+  });
 }
 
 function authenticateUpdate(update: IVersionUpdate) {

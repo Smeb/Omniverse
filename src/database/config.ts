@@ -37,7 +37,8 @@ module.exports = {
     database: "omniverse_test",
     host: process.env.DATABASE_HOSTNAME,
     port: process.env.DATABASE_PORT,
-    dialect: "postgres"
+    dialect: "postgres",
+    logging: false
   },
   production: {
     username: process.env.DATABASE_USERNAME,

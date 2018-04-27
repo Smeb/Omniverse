@@ -1,8 +1,11 @@
 import * as bodyParser from "body-parser";
 import * as express from "express";
 import * as expressWinston from "express-winston";
+
+import dotenv from "dotenv";
 import * as fs from "fs";
 import * as winston from "winston";
+
 
 import { JsonSchemaValidation } from "express-jsonschema";
 
@@ -26,6 +29,7 @@ export class Server {
   public app: express.Application;
 
   constructor() {
+    dotenv.config();
     this.app = express();
     this.database();
     this.config();

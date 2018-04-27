@@ -1,28 +1,31 @@
-import * as crypto from "crypto";
 import { UniqueConstraintError, ValidationError } from "sequelize";
 
+import { authenticate, verifyKey } from "./crypto";
 import {
   EnvironmentNamespaces,
   namespaceRegex
 } from "./models/environmentNamespaces";
 import { sequelize } from "./sequelize";
 
-import { serverPublicKey } from "./datatypes/server_key";
-
 import UserError from "../../errors/user";
 import { trimValidationMessage } from "../../errors/utils/formatting";
 import { INamespaceRegistration } from "../../routes/types";
+import { serverPublicKey } from "./datatypes/server_key";
+
 
 export async function create(registration: INamespaceRegistration) {
   authenticateNamespaceRegistration(registration);
   const { namespace } = registration;
 
   if (!namespaceRegex.test(namespace)) {
-    throw new UserError("Environment namespace should be a lowercase word");
+    throw new UserError(`Environment namespace '${namespace} is invalid, namespace should be a lowercase word`);
   }
 
   try {
-    const key = decodeAndVerifyKey(registration);
+    const key = Buffer.from(registration.key, "base64").toString();
+
+    verifyKey(key);
+
     const result = await EnvironmentNamespaces.create({ namespace, key });
     return result.dataValues.namespace;
   } catch (err) {
@@ -73,14 +76,6 @@ function authenticateNamespaceRegistration(
   return namespace;
 }
 
-function authenticate(key, message, signature) {
-  const verifier = crypto.createVerify("RSA-SHA256");
-  verifier.update(message);
-  if (!verifier.verify(serverPublicKey, signature)) {
-    throw new UserError("Authentication Failed");
-  }
-}
-
 async function getKey(namespace: string) {
   while (namespace !== "") {
     const query = await EnvironmentNamespaces.findOne({
@@ -97,17 +92,4 @@ async function getKey(namespace: string) {
     }
   }
   return null;
-}
-
-function decodeAndVerifyKey(registration: INamespaceRegistration) {
-  try {
-    const key = Buffer.from(registration.key, "base64").toString();
-    crypto.publicEncrypt(key, Buffer.from("Test"));
-    return key;
-  } catch (e) {
-    throw new UserError(
-      "Key should be sent as base64, decoded base64 should be .pem format",
-      e
-    );
-  }
 }

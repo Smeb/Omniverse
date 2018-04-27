@@ -10,28 +10,47 @@ const bundleManifest = (id: string, type: string) => ({
   uri: `test-uri-${id}`
 });
 
-const environmentManifest = (
+export const dllManifest = bundleManifest("1", "dll");
+export const envManifest = bundleManifest("2", "env");
+export const dependencyDllManifest = bundleManifest("3", "dll");
+
+const makeName = name => ({ name });
+
+const makeEnvironmentVersion = (
   name: string,
   version: string,
   bundleManifests,
   dependencies = undefined
-) => ({ bundleManifests, dependencies, name, version });
+) => {
+  const environmentVersion = {
+    bundleManifests,
+    environmentName: { name },
+    version
+  };
 
-export const dllManifest = bundleManifest("1", "dll");
-export const envManifest = bundleManifest("2", "env");
-export const dependencyManifest = bundleManifest("3", "dll");
+  if (dependencies === undefined) {
+    return environmentVersion
+  } else {
+    return { ...environmentVersion, dependencies };
+  }
+};
 
-export const versionLookupResult = environmentManifest(
+const dependencyVersionLookupResult = makeEnvironmentVersion(
+  "testEnvironment", "0.0.1", [dependencyDllManifest]
+);
+
+export const environmentVersionLookupResult = makeEnvironmentVersion(
   requestHeaders.name,
   requestHeaders.version,
   [dllManifest, envManifest],
-  [environmentManifest("testEnvironment", "0.0.1", [dependencyManifest])]
+  [dependencyVersionLookupResult]
 );
+
 
 export const versionLookupTransform = {
   bundles: [dllManifest, envManifest],
   dependencies: [{
-    bundles: [dependencyManifest],
+    bundles: [dependencyDllManifest],
     name: "testEnvironment",
     version: "0.0.1"
   }],

@@ -20,16 +20,6 @@ export async function registerVersion(
   );
 }
 
-export async function updateVersion(
-  request: Request,
-  response: Response
-): Promise<void> {
-  const update: IVersionUpdate = request.body;
-  await VersionAccess.updateVersion(update).then(result => {
-    versionUpdateSuccessResponse(result, response);
-  });
-}
-
 export async function getVersion(request: Request, response: Response) {
   const name = request.get("name");
   const version = request.get("version");
@@ -91,11 +81,10 @@ function formatManifests(bundleManifests: IBundleManifest[]) {
 }
 
 function versionAddSuccessResponse(registration, response: Response) {
-  response
-    .status(201)
-    .json(
-      `Environment (${registration.name}, ${ registration.version }) added successfully`
-    );
+  response.status(201);
+  response.json(
+    `Environment (${registration.name}, ${ registration.version }) added successfully`
+  );
 }
 
 function versionUpdateSuccessResponse(result, response: Response) {
