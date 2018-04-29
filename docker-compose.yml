@@ -10,7 +10,7 @@ services:
     depends_on:
       - postgres
     ports:
-    - "2345:8080"
+    - "2345:2345"
   postgres:
     image: postgres:9.4
     volumes:

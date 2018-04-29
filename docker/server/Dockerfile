@@ -1,5 +1,5 @@
 FROM node:latest
-WORKDIR /app
-ADD . /app
+WORKDIR /Omniverse
+ADD . /Omniverse
 RUN yarn
 RUN yarn grunt

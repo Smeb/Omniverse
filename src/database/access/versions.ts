@@ -194,21 +194,14 @@ function transactionsErrorMap(
   // Validations can have custom error messages set
   if (error instanceof ValidationError) {
     if (error.errors.length === 2) {
-      // Custom validators on indexes aren't allowed, so we set a custom message
-      throw new UserError(`(${name}, ${version}) pair already exists in the database`);
+      // Custom validators on indexes aren't allowed, so have to set a custom message
+      if (firstError.instance instanceof BundleManifests) {
+        throw new UserError(duplicateTypesInEnvironment());
+      } else {
+        throw new UserError(environmentVersionAlreadyExists(name, version));
+      }
     } else {
       throw new UserError(firstError.message);
-    }
-  }
-
-  // Other errors need to be mapped into specific error messages
-  if (firstError.instance instanceof EnvironmentVersions) {
-    if (error instanceof UniqueConstraintError) {
-      throw new UserError(environmentVersionAlreadyExists(name, version));
-    }
-  } else if (firstError.instance instanceof BundleManifests) {
-    if (error instanceof UniqueConstraintError) {
-      throw new UserError(duplicateTypesInEnvironment());
     }
   }
 }
@@ -217,6 +210,7 @@ async function getDependencyIds(registration: IVersionRegistration) {
   const dependencyIdResults = await Promise.all(
     registration.dependencies.map(dependency => {
       const { name, version } = dependency;
+
       if (!validateDependencyPrefix(registration.name, name)) {
         throw new UserError(
           "Environment dependency names must be prefixes of the environment name"
@@ -246,11 +240,11 @@ function validateDependencyPrefix(
     return false;
   }
 
-  dependencyNameArray.forEach((word, index) => {
-    if (word !== environmentNameArray[index]) {
+  for (let i = 0; i < dependencyNameArray.length; i++) {
+    if (dependencyNameArray[i] !== environmentNameArray[i]) {
       return false;
     }
-  });
+  }
 
   return true;
 }

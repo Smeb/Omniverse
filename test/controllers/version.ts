@@ -10,6 +10,7 @@ import {
 } from "./fixtures/version";
 
 const VersionAccessStubs = {
+  getVersions: stub(),
   getVersionWithDependencies: stub(),
   registerVersion: stub()
 };
@@ -29,11 +30,47 @@ const mockRequest = (method, url, headers, body = undefined) => {
   return request;
 };
 
-
 describe("the version controller", () => {
   beforeEach(() => {
     VersionAccessStubs.getVersionWithDependencies.reset();
     VersionAccessStubs.registerVersion.reset();
+  });
+
+  describe("getVersions", () => {
+    it("calls the version access controller to get all versions", async () => {
+      const response = {
+        json: stub(),
+        send: stub(),
+        status: stub()
+      };
+
+      await VersionController.getVersions({}, response);
+
+      expect(VersionAccessStubs.getVersions).to.be.calledOnce;
+      expect(response.json).to.be.calledOnce;
+      expect(response.send).to.be.calledOnce;
+      expect(response.status).to.be.calledOnce;
+    })
+
+    it("sends the response with status 200 and json which is the returned data from getVersions", async () => {
+      const response = {
+        json: stub(),
+        send: stub(),
+        status: stub()
+      };
+      const data = [{ name: "name", version: "0.0.1" }]
+      VersionAccessStubs.getVersions.returns(data);
+
+      await VersionController.getVersions({}, response);
+
+      expect(response.json).to.be.calledOnce;
+      expect(response.json).to.be.calledWith(data);
+
+      expect(response.status).to.be.calledOnce;
+      expect(response.status).to.be.calledWith(200);
+
+      expect(response.send).to.be.calledOnce;
+    })
   });
 
   describe("getVersion", () => {
@@ -115,6 +152,7 @@ describe("the version controller", () => {
 
       const response = {
         json: stub(),
+        send: stub(),
         status: stub()
       };
 
@@ -133,6 +171,7 @@ describe("the version controller", () => {
 
       const response = {
         json: stub(),
+        send: stub(),
         status: stub()
       };
 

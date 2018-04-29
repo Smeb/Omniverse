@@ -1,6 +1,6 @@
 import { IVersionRegistration } from "../../../routes/types";
 
-export const versionRegex = /^(\d{1,3}.){2}\d{1,3}$/;
+export const versionRegex = /^(\d{1,3}\.){2}\d{1,3}$/;
 
 export function validateVersion(version: string) {
   return versionRegex.test(version);
@@ -19,8 +19,8 @@ function versionStringToInt(version: string) {
 
 export function compareVersions(versionA: string, versionB: string) {
   // Returns the result of versionA > versionB, where both versions are strings
-  const versionAValue = this.versionStringToInt(versionA);
-  const versionBValue = this.versionStringToInt(versionB);
+  const versionAValue = versionStringToInt(versionA);
+  const versionBValue = versionStringToInt(versionB);
 
   return versionAValue > versionBValue;
 }

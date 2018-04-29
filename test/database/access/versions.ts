@@ -123,6 +123,28 @@ describe("version access", () => {
       expect(version.dependencies.length).to.equal(2);
     })
 
+    it("throws an error if the environment's dependency isn't a prefix of its name", async () => {
+      const badRegistration = { ...registrationFixture, dependencies: [ { name: "notprefix", version: "0.0.1" }] };
+
+      try {
+        await VersionAccess.registerVersion(badRegistration);
+        expect.fail()
+      } catch (e) {
+        expect(e.message).to.contain("dependency names must be prefixes")
+      }
+    })
+
+    it("throws an error if the environment's dependency is too long", async () => {
+      const badRegistration = { ...registrationFixture, dependencies: [ { name: "sample.top.two.cats", version: "0.0.1" }] };
+
+      try {
+        await VersionAccess.registerVersion(badRegistration);
+        expect.fail()
+      } catch (e) {
+        expect(e.message).to.contain("dependency names must be prefixes")
+      }
+    })
+
     it("throws an error if the version is incorrectly formatted", async () => {
       const badRegistration = { ...registrationFixture, version: "123" }
       try {
@@ -134,8 +156,23 @@ describe("version access", () => {
       }
     });
 
+    it("throws an error if the version has more than one bundleManifest of type env or dll", async () => {
+      const badBundle = registrationFixture.bundles[0];
+      badBundle.type = "dll";
+
+      const bundles = [badBundle, registrationFixture.bundles[1]];
+      const badRegistration = { ...registrationFixture, bundles };
+
+      try {
+        await VersionAccess.registerVersion(badRegistration);
+        expect.fail()
+      } catch (e) {
+        expect(e.message).to.contain("duplicate bundle types")
+      }
+    })
+
     it("throws an error if dependencies are missing", async () => {
-      const badRegistration = { ...registrationFixture, dependencies: [{ name: "not", version: "0.0.1" }] }
+      const badRegistration = { ...registrationFixture, dependencies: [{ name: "sample", version: "0.0.8" }] }
       try {
         await VersionAccess.registerVersion(badRegistration);
         expect.fail()

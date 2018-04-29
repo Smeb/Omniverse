@@ -71,7 +71,7 @@ function authenticateNamespaceRegistration(
   const message = namespace + key;
   const decodedSignature = Buffer.from(signature, "base64");
 
-  authenticate(serverPublicKey, message, signature);
+  authenticate(serverPublicKey, message, decodedSignature);
 
   return namespace;
 }

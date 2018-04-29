@@ -85,10 +85,7 @@ function versionAddSuccessResponse(registration, response: Response) {
   response.json(
     `Environment (${registration.name}, ${ registration.version }) added successfully`
   );
-}
-
-function versionUpdateSuccessResponse(result, response: Response) {
-  throw new UserError("Not implemented - response");
+  response.send();
 }
 
 const environmentVersionNotFound = (name, version) =>

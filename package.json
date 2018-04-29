@@ -9,8 +9,21 @@
   "scripts": {
     "server": "node ./bin/server",
     "dev": "NODE_ENV=development nodemon ./bin/server",
-    "reseed": "sequelize db:seed:undo:all && sequelize db:seed:all",
-    "test": "NODE_ENV=test mocha --exit -r ts-node/register \"test/**/*.ts\""
+    "test": "NODE_ENV=test nyc mocha --exit -r ts-node/register \"test/**/*.ts\"",
+    "upload": "node dist/tools/upload"
+  },
+  "nyc": {
+    "extension": [
+      ".ts"
+    ],
+    "exclude": [
+      "**/*.d.ts",
+      "src/database/config.ts",
+      "src/database/access/datatypes/server_key.ts"
+    ],
+    "include": [
+      "src"
+    ]
   },
   "dependencies": {
     "body-parser": "^1.18.2",
@@ -21,6 +34,8 @@
     "express-winston": "^2.5.0",
     "grunt-exec": "^3.0.0",
     "morgan": "^1.9.0",
+    "node-fetch": "^2.1.2",
+    "nyc": "^11.7.1",
     "pg": "^7.4.1",
     "pg-hstore": "^2.3.2",
     "sequelize": "^4.34.0",

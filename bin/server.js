@@ -1,13 +1,15 @@
 #!/usr/bin/env node
 "use strict"
 
+require("dotenv").config();
+
 var server = require("../dist/server");
 var debug = require("debug")("express:server");
 var http = require("http");
 
 require("source-map-support").install();
 
-var httpPort = normalisedPort(process.env.ServerPort || 8080);
+var httpPort = normalisedPort(process.env.SERVER_PORT || 8080);
 var app = server.Server.bootstrap().app;
 app.set("port", httpPort);
 var httpServer = http.createServer(app);
